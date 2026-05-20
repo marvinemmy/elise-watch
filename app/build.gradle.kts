@@ -56,7 +56,7 @@ dependencies {
     implementation("androidx.activity:activity-compose:1.8.2")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
 
-    // Réseau
+    // RÃ©seau
     implementation("com.squareup.retrofit2:retrofit:2.11.0")
     implementation("com.squareup.retrofit2:converter-gson:2.11.0")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
@@ -64,6 +64,9 @@ dependencies {
 
     // Stockage token
     implementation("androidx.datastore:datastore-preferences:1.0.0")
+
+    // TFLite (wake word "Ok Ã‰lise")
+    implementation("org.tensorflow:tensorflow-lite:2.14.0")
 
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
