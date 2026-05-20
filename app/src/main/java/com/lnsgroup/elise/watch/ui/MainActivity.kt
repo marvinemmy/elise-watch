@@ -13,6 +13,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.lnsgroup.elise.watch.Config
 import com.lnsgroup.elise.watch.databinding.ActivityMainBinding
+import com.lnsgroup.elise.watch.network.UpdateChecker
 import com.lnsgroup.elise.watch.service.EliseForegroundService
 
 class MainActivity : AppCompatActivity() {
@@ -45,6 +46,7 @@ class MainActivity : AppCompatActivity() {
         }
         loadPrefs()
         checkPermissions()
+        UpdateChecker.checkAsync(this)
     }
 
     override fun onResume() {

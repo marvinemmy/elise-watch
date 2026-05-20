@@ -7,12 +7,14 @@ android {
     namespace = "com.lnsgroup.elise.watch"
     compileSdk = 34
 
+    val buildNum = (project.findProperty("versionCode") as String?)?.toInt() ?: 1
+
     defaultConfig {
         applicationId = "com.lnsgroup.elise.watch"
         minSdk = 30
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = buildNum
+        versionName = "1.0.$buildNum"
         buildConfigField("String", "API_BASE_URL", "\"https://lnsgroup.dev\"")
     }
 
@@ -43,10 +45,10 @@ dependencies {
     implementation("androidx.activity:activity-ktx:1.8.2")
     implementation("androidx.appcompat:appcompat:1.6.1")
 
-    // WebSocket (communication avec Ã‰lise)
+    // WebSocket (communication avec Élise)
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
 
-    // TFLite (wake word "Ok Ã‰lise")
+    // TFLite (wake word "Ok Élise")
     implementation("org.tensorflow:tensorflow-lite:2.14.0")
 
     // Coroutines
