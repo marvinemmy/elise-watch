@@ -1,0 +1,87 @@
+package com.lnsgroup.elise.watch.ui
+
+import android.Manifest
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import android.content.pm.PackageManager
+import android.os.Bundle
+import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
+import com.lnsgroup.elise.watch.Config
+import com.lnsgroup.elise.watch.databinding.ActivityMainBinding
+import com.lnsgroup.elise.watch.service.EliseForegroundService
+
+class MainActivity : AppCompatActivity() {
+
+    private lateinit var binding: ActivityMainBinding
+
+    private val stateReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            val stateName = intent.getStringExtra(EliseForegroundService.EXTRA_STATE) ?: return
+            val state = try { EliseState.valueOf(stateName) } catch (e: Exception) { EliseState.IDLE }
+            val detail = intent.getStringExtra("detail") ?: ""
+            binding.particleView.state = state
+            if (detail.isNotEmpty()) binding.particleView.transcript = detail
+        }
+    }
+
+    private val micPermLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) startEliseService()
+        else Toast.makeText(this, "Microphone required for ELISE", Toast.LENGTH_LONG).show()
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+        binding.btnMic.setOnClickListener {
+            sendBroadcast(Intent("com.lnsgroup.elise.watch.MANUAL_TRIGGER"))
+        }
+        loadPrefs()
+        checkPermissions()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        val filter = IntentFilter(EliseForegroundService.ACTION_STATE_CHANGED)
+        registerReceiver(stateReceiver, filter, RECEIVER_NOT_EXPORTED)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        try { unregisterReceiver(stateReceiver) } catch (_: Exception) {}
+    }
+
+    private fun checkPermissions() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
+            == PackageManager.PERMISSION_GRANTED) {
+            startEliseService()
+        } else {
+            micPermLauncher.launch(Manifest.permission.RECORD_AUDIO)
+        }
+    }
+
+    private fun startEliseService() {
+        EliseForegroundService.start(this)
+        binding.particleView.state = EliseState.LISTENING
+    }
+
+    private fun loadPrefs() {
+        val prefs = getSharedPreferences(Config.PREF_FILE, Context.MODE_PRIVATE)
+        // Toujours forcer l'URL de production et rafraîchir le token embarqué
+        prefs.edit()
+            .putString(Config.KEY_SERVER_URL, Config.WS_URL_PROD)
+            .apply()
+        if (!prefs.contains(Config.KEY_TOKEN)) {
+            prefs.edit()
+                .putString(Config.KEY_TOKEN, Config.PRELOADED_TOKEN)
+                .apply()
+        }
+    }
+}

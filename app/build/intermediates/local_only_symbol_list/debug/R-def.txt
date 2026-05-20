@@ -1,0 +1,10 @@
+R_DEF: Internal format may change without notice
+local
+drawable ic_elise
+drawable orb_idle
+drawable orb_listening
+drawable orb_speaking
+id btnMic
+id particleView
+layout activity_main
+string app_name

@@ -1,0 +1,4 @@
+-keep class com.lnsgroup.elise.watch.** { *; }
+-keep class org.tensorflow.lite.** { *; }
+-dontwarn okhttp3.**
+-dontwarn okio.**

@@ -1,0 +1,26 @@
+[
+    {
+        "merged": "C:\\Users\\User\\.gradle\\daemon\\8.4\\com.lnsgroup.elise.watch.app-merged_res-31:\\drawable_orb_speaking.xml.flat",
+        "source": "C:\\Users\\User\\.gradle\\daemon\\8.4\\com.lnsgroup.elise.watch.app-main-33:\\drawable\\orb_speaking.xml"
+    },
+    {
+        "merged": "C:\\Users\\User\\.gradle\\daemon\\8.4\\com.lnsgroup.elise.watch.app-merged_res-31:\\drawable_ic_elise.xml.flat",
+        "source": "C:\\Users\\User\\.gradle\\daemon\\8.4\\com.lnsgroup.elise.watch.app-main-33:\\drawable\\ic_elise.xml"
+    },
+    {
+        "merged": "C:\\Users\\User\\.gradle\\daemon\\8.4\\com.lnsgroup.elise.watch.app-merged_res-31:\\drawable_orb_idle.xml.flat",
+        "source": "C:\\Users\\User\\.gradle\\daemon\\8.4\\com.lnsgroup.elise.watch.app-main-33:\\drawable\\orb_idle.xml"
+    },
+    {
+        "merged": "com.lnsgroup.elise.watch.app-merged_res-31:/layout_activity_main.xml.flat",
+        "source": "com.lnsgroup.elise.watch.app-main-33:/layout/activity_main.xml"
+    },
+    {
+        "merged": "C:\\Users\\User\\.gradle\\daemon\\8.4\\com.lnsgroup.elise.watch.app-merged_res-31:\\drawable_orb_listening.xml.flat",
+        "source": "C:\\Users\\User\\.gradle\\daemon\\8.4\\com.lnsgroup.elise.watch.app-main-33:\\drawable\\orb_listening.xml"
+    },
+    {
+        "merged": "C:\\Users\\User\\.gradle\\daemon\\8.4\\com.lnsgroup.elise.watch.app-merged_res-31:\\layout_activity_main.xml.flat",
+        "source": "C:\\Users\\User\\.gradle\\daemon\\8.4\\com.lnsgroup.elise.watch.app-main-33:\\layout\\activity_main.xml"
+    }
+]
