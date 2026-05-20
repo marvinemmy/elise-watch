@@ -19,7 +19,7 @@ jobs:
       - run: chmod +x gradlew
       - run: ./gradlew assembleRelease --no-daemon
         env:
-          GRADLE_OPTS: "-Xmx2g -XX:MaxMetaspaceSize=512m"
+          GRADLE_OPTS: "-Xmx4g"
       - uses: actions/upload-artifact@v4
         with:
           name: ELISE-Watch-APK
