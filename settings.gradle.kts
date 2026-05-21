@@ -14,3 +14,4 @@ dependencyResolutionManagement {
 }
 rootProject.name = "EliseWatch"
 include(":app")
+include(":phone")

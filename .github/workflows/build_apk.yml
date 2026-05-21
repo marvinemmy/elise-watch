@@ -1,4 +1,4 @@
-name: Build ELISE Watch APK
+name: Build ELISE APKs
 
 on:
   push:
@@ -28,36 +28,54 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Build Debug APK (auto-signed)
-        run: ./gradlew assembleDebug -PversionCode=${{ github.run_number }} --no-daemon
+      - name: Build Watch APK + Phone Companion APK
+        run: ./gradlew :app:assembleDebug :phone:assembleDebug -PversionCode=${{ github.run_number }} --no-daemon
         env:
           GRADLE_OPTS: "-Xmx4g"
 
-      - name: Rename APK
-        run: cp app/build/outputs/apk/debug/app-debug.apk ELISE_Watch_v1.0.${{ github.run_number }}.apk
+      - name: Rename APKs
+        run: |
+          cp app/build/outputs/apk/debug/app-debug.apk ELISE_Watch_v1.0.${{ github.run_number }}.apk
+          cp phone/build/outputs/apk/debug/phone-debug.apk ELISE_Companion_v1.0.${{ github.run_number }}.apk
 
-      - name: Upload artifact
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ELISE-Watch-v1.0.${{ github.run_number }}
-          path: ELISE_Watch_v1.0.${{ github.run_number }}.apk
+          name: ELISE-v1.0.${{ github.run_number }}
+          path: |
+            ELISE_Watch_v1.0.${{ github.run_number }}.apk
+            ELISE_Companion_v1.0.${{ github.run_number }}.apk
           retention-days: 90
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v1.0.${{ github.run_number }}
-          name: ELISE Watch v1.0.${{ github.run_number }}
-          files: ELISE_Watch_v1.0.${{ github.run_number }}.apk
+          name: ELISE v1.0.${{ github.run_number }}
+          files: |
+            ELISE_Watch_v1.0.${{ github.run_number }}.apk
+            ELISE_Companion_v1.0.${{ github.run_number }}.apk
           draft: false
           prerelease: false
           body: |
-            ## ELISE Watch v1.0.${{ github.run_number }}
-            L'application vérifie automatiquement les nouvelles versions au démarrage.
+            ## ELISE v1.0.${{ github.run_number }}
+            **Installation (première fois) :**
+            1. Télécharge `ELISE_Companion_v1.0.${{ github.run_number }}.apk` sur ton téléphone
+            2. Installe-le (autoriser sources inconnues)
+            3. L'app montre s'installe automatiquement via Bluetooth
 
-      - name: Deploy APK to lnsgroup.dev (OTA)
+            **Mises à jour suivantes :** automatiques via OTA au démarrage de l'app.
+
+      - name: Deploy Watch APK to lnsgroup.dev (OTA)
         run: |
           curl -s -X POST "https://lnsgroup.dev/apk/upload?token=S3W9bJQDqayn1ckjfo8S57UhzBk-KPuqkprMq293kQU" \
             -F "file=@ELISE_Watch_v1.0.${{ github.run_number }}.apk" \
             -F "version_code=${{ github.run_number }}" \
-            && echo "APK deployed to lnsgroup.dev" || echo "OTA upload failed (non-fatal)"
+            && echo "Watch APK deployed" || echo "Watch OTA upload failed (non-fatal)"
+
+      - name: Deploy Companion APK to lnsgroup.dev (OTA)
+        run: |
+          curl -s -X POST "https://lnsgroup.dev/apk/companion/upload?token=S3W9bJQDqayn1ckjfo8S57UhzBk-KPuqkprMq293kQU" \
+            -F "file=@ELISE_Companion_v1.0.${{ github.run_number }}.apk" \
+            -F "version_code=${{ github.run_number }}" \
+            && echo "Companion APK deployed" || echo "Companion OTA upload failed (non-fatal)"
