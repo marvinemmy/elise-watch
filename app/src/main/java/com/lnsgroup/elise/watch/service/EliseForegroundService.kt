@@ -1,10 +1,13 @@
 package com.lnsgroup.elise.watch.service
 
 import android.app.*
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.os.*
 import android.util.Log
+import androidx.core.content.ContextCompat
 import androidx.core.app.NotificationCompat
 import com.lnsgroup.elise.watch.Config
 import com.lnsgroup.elise.watch.audio.AudioCapture
@@ -13,6 +16,7 @@ import com.lnsgroup.elise.watch.audio.WakeWordDetector
 import com.lnsgroup.elise.watch.network.EliseWebSocket
 import com.lnsgroup.elise.watch.ui.EliseState
 import kotlinx.coroutines.*
+import java.util.concurrent.atomic.AtomicBoolean
 
 private const val TAG = "EliseForegroundService"
 private const val NOTIF_CHANNEL_ID = "elise_listening"
@@ -29,6 +33,7 @@ class EliseForegroundService : Service() {
     // État partagé avec l'UI via Intent broadcast
     companion object {
         const val ACTION_STATE_CHANGED = "com.lnsgroup.elise.watch.STATE_CHANGED"
+        const val ACTION_MANUAL_TRIGGER = "com.lnsgroup.elise.watch.MANUAL_TRIGGER"
         const val EXTRA_STATE = "state"
 
         fun start(context: Context) {
@@ -41,12 +46,23 @@ class EliseForegroundService : Service() {
         }
     }
 
+    private val manualTrigger = AtomicBoolean(false)
+
+    private val manualTriggerReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            Log.i(TAG, "Déclenchement manuel")
+            manualTrigger.set(true)
+        }
+    }
+
     override fun onCreate() {
         super.onCreate()
         createNotificationChannel()
         wakeWordDetector = WakeWordDetector(this)
         audioCapture = AudioCapture()
         audioPlayer = AudioPlayer(cacheDir)
+        val filter = IntentFilter(ACTION_MANUAL_TRIGGER)
+        ContextCompat.registerReceiver(this, manualTriggerReceiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED)
         Log.i(TAG, "Service créé")
     }
 
@@ -60,6 +76,7 @@ class EliseForegroundService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
+        try { unregisterReceiver(manualTriggerReceiver) } catch (_: Exception) {}
         listeningJob?.cancel()
         audioCapture.stop()
         audioPlayer.cleanup()
@@ -82,7 +99,7 @@ class EliseForegroundService : Service() {
                 val (samples, rms) = audioCapture.readChunk()
                 if (samples.isEmpty()) continue
 
-                val wakeDetected = wakeWordDetector.process(samples)
+                val wakeDetected = wakeWordDetector.process(samples) || manualTrigger.getAndSet(false)
                 if (!wakeDetected) continue
 
                 // ── Wake word détecté ! ────────────────────────────────────────

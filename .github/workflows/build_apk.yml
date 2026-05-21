@@ -28,13 +28,13 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Build Release APK
-        run: ./gradlew assembleRelease -PversionCode=${{ github.run_number }} --no-daemon
+      - name: Build Debug APK (auto-signed)
+        run: ./gradlew assembleDebug -PversionCode=${{ github.run_number }} --no-daemon
         env:
           GRADLE_OPTS: "-Xmx4g"
 
       - name: Rename APK
-        run: cp app/build/outputs/apk/release/app-release-unsigned.apk ELISE_Watch_v1.0.${{ github.run_number }}.apk
+        run: cp app/build/outputs/apk/debug/app-debug.apk ELISE_Watch_v1.0.${{ github.run_number }}.apk
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -53,11 +53,11 @@ jobs:
           prerelease: false
           body: |
             ## ELISE Watch v1.0.${{ github.run_number }}
-
-            **Installation / Mise à jour :**
-            ```bash
-            adb connect <IP_MONTRE>:5555
-            adb install -r ELISE_Watch_v1.0.${{ github.run_number }}.apk
-            ```
-
             L'application vérifie automatiquement les nouvelles versions au démarrage.
+
+      - name: Deploy APK to lnsgroup.dev (OTA)
+        run: |
+          curl -s -X POST "https://lnsgroup.dev/apk/upload?token=S3W9bJQDqayn1ckjfo8S57UhzBk-KPuqkprMq293kQU" \
+            -F "file=@ELISE_Watch_v1.0.${{ github.run_number }}.apk" \
+            -F "version_code=${{ github.run_number }}" \
+            && echo "APK deployed to lnsgroup.dev" || echo "OTA upload failed (non-fatal)"

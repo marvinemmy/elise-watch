@@ -60,6 +60,16 @@ class EliseParticleView @JvmOverloads constructor(
         textAlign = Paint.Align.CENTER
     }
 
+    private val stateLabelText = mapOf(
+        EliseState.LISTENING    to "EN ÉCOUTE",
+        EliseState.RECORDING    to "J'ÉCOUTE...",
+        EliseState.PROCESSING   to "TRAITEMENT...",
+        EliseState.SPEAKING     to "ÉLISE PARLE",
+        EliseState.ERROR        to "ERREUR",
+        EliseState.IDLE         to "VEILLE",
+        EliseState.NOT_CONFIGURED to "CONFIG. REQUISE",
+    )
+
     // ── État ──────────────────────────────────────────────────────────────────
     var state: EliseState = EliseState.IDLE
         set(v) { field = v; updateColors(); invalidate() }
@@ -167,7 +177,19 @@ class EliseParticleView @JvmOverloads constructor(
         // Orbe central
         drawCoreOrb(canvas)
 
-        // Transcript
+        // Title — "ÉLISE" at top
+        textPaint.textSize = width * 0.092f
+        textPaint.color = Color.argb(200, 0, 229, 255)
+        canvas.drawText("ÉLISE", cx, cy * 0.22f, textPaint)
+
+        // State label below title
+        val labelColor = colors[0]
+        textPaint.textSize = width * 0.058f
+        textPaint.color = Color.argb(210, Color.red(labelColor), Color.green(labelColor), Color.blue(labelColor))
+        val label = stateLabelText[state] ?: ""
+        canvas.drawText(label, cx, cy * 0.42f, textPaint)
+
+        // Transcript below orb
         if (transcript.isNotEmpty() && state != EliseState.RECORDING) {
             statusPaint.textSize = width * 0.040f
             statusPaint.color = Color.argb(120, 90, 122, 153)
