@@ -16,7 +16,7 @@
     <application
         android:label="ELISE"
         android:icon="@drawable/ic_elise"
-        android:theme="@android:style/Theme.DeviceDefault"
+        android:theme="@style/Theme.Elise"
         android:allowBackup="false"
         android:supportsRtl="true">
 

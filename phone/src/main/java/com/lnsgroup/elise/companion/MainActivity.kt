@@ -42,7 +42,6 @@ class MainActivity : AppCompatActivity() {
         binding.tvVersion.text = "v${BuildConfig.VERSION_NAME}"
 
         binding.root.setOnClickListener { onMicTap() }
-        binding.btnMic.setOnClickListener { onMicTap() }
 
         // Gestionnaire de permissions centralisé
         permManager = ElisePermissionManager(this)
