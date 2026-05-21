@@ -10,7 +10,7 @@ android {
     val buildNum = (project.findProperty("versionCode") as String?)?.toInt() ?: 1
 
     defaultConfig {
-        applicationId = "com.lnsgroup.elise.watch"
+        applicationId = "com.lnsgroup.elise.companion"
         minSdk = 30
         targetSdk = 34
         versionCode = buildNum
