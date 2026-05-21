@@ -7,7 +7,7 @@ object Config {
     const val WS_URL_LOCAL = "ws://192.168.1.100:8000/ws/voice"  // tests locaux uniquement
 
     // Token preloaded (licence premium 10 ans) — mis à jour automatiquement
-    const val PRELOADED_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsaWNlbnNlX3V1aWQiOiJlZDM5ODM1Zi00Y2ZhLTRjNzEtOTIyOS1kODUzMzBiZDg3YTgiLCJwbGFuIjoicHJlbWl1bSIsImV4cCI6MTc3OTM2NDYwNywiaWF0IjoxNzc5Mjc4MjA3fQ.UCQ3YZMcr_g_vCwJesNcY0LclPtS42Rm7gwVrrXj7BA"
+    const val PRELOADED_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc19hZG1pbiI6dHJ1ZSwiZW1haWwiOiJtYXJ2aW5wa2VpdGFAZ21haWwuY29tIiwiZXhwIjoyMDk0NzA2MDYzLCJpYXQiOjE3NzkzNDYwNjN9.GXRa93bmRpNNaf7j165OW65sz6A-VSdsxX1J4t6imV8"
 
     // Audio
     const val SAMPLE_RATE = 16000
