@@ -160,9 +160,25 @@ class EliseOverlayService : Service() {
         }
     }
 
+    private var tapCount = 0
+    private var lastTap = 0L
+
     private fun toggleRecording() {
+        val now = System.currentTimeMillis()
+        // Double tap = ouvrir panneau contrôle PC
+        if (now - lastTap < 400) {
+            tapCount++
+            if (tapCount >= 2) {
+                tapCount = 0
+                showPcControlPanel()
+                return
+            }
+        } else {
+            tapCount = 1
+        }
+        lastTap = now
+
         if (callMode) {
-            // En appel : pas d'enregistrement vocal, afficher un message
             showTextMessage("Tu es en appel. Dis-moi ce dont tu as besoin par geste.")
             return
         }
@@ -170,6 +186,23 @@ class EliseOverlayService : Service() {
             isRecording = false
         } else {
             startVoiceCapture()
+        }
+    }
+
+    private fun showPcControlPanel() {
+        scope.launch {
+            val online = ElisePcControl.pcStatus()
+            val statusText = if (online) "PC en ligne ✓" else "PC hors ligne"
+            withContext(Dispatchers.Main) {
+                tvMessage?.text = buildString {
+                    appendLine("🖥  CONTRÔLE PC — $statusText")
+                    appendLine()
+                    appendLine("🦇 Double-tap → Bat Mode")
+                    appendLine("📷 Triple-tap → Caméra")
+                    appendLine("🎤 Tap×4 → Micro")
+                }
+                textCard?.visibility = android.view.View.VISIBLE
+            }
         }
     }
 
