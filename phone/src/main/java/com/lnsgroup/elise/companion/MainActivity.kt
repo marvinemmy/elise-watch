@@ -8,6 +8,7 @@ import android.media.MediaPlayer
 import android.media.MediaRecorder
 import android.os.Bundle
 import android.util.Log
+import android.view.MotionEvent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
@@ -23,102 +24,118 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private var isRecording = false
-    private var recordJob: Job? = null
+    private var scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
     private val micPermLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { granted ->
-        if (granted) startRecording() else setStatus("Microphone requis")
+        if (granted) startRecording()
+        else setStatus("Microphone requis pour parler à Élise")
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
         binding.tvVersion.text = "v${BuildConfig.VERSION_NAME}"
-        setStatus("Appuie sur le micro pour parler à Élise")
 
-        binding.btnMic.setOnClickListener {
-            if (isRecording) stopRecording() else checkMicAndRecord()
-        }
+        // Tap n'importe où pour parler
+        binding.root.setOnClickListener { onMicTap() }
+        binding.btnMic.setOnClickListener { onMicTap() }
+
+        setStatus("Appuie pour parler à Élise")
 
         UpdateChecker.checkAsync(this) { status ->
-            runOnUiThread {
-                if (!status.startsWith("À jour")) setStatus(status)
-            }
+            if (!status.startsWith("À jour")) setStatus(status)
         }
     }
 
-    private fun checkMicAndRecord() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
-            == PackageManager.PERMISSION_GRANTED) {
-            startRecording()
-        } else {
-            micPermLauncher.launch(Manifest.permission.RECORD_AUDIO)
+    private fun onMicTap() {
+        if (isRecording) stopRecording()
+        else {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
+                == PackageManager.PERMISSION_GRANTED) startRecording()
+            else micPermLauncher.launch(Manifest.permission.RECORD_AUDIO)
         }
     }
 
     private fun startRecording() {
         isRecording = true
-        binding.btnMic.text = "⏹"
-        setStatus("J'écoute…")
+        binding.waveView.setState(EliseWaveView.State.RECORDING)
+        setStatus("J'écoute…  (appuie pour arrêter)")
 
-        val bufferSize = AudioRecord.getMinBufferSize(
+        val bufSize = AudioRecord.getMinBufferSize(
             SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT
         ).coerceAtLeast(SAMPLE_RATE / 5 * 2)
 
-        recordJob = CoroutineScope(Dispatchers.IO).launch {
+        scope.launch(Dispatchers.IO) {
             val recorder = AudioRecord(
                 MediaRecorder.AudioSource.MIC, SAMPLE_RATE,
-                AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, bufferSize * 4
+                AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, bufSize * 4
             )
             recorder.startRecording()
-            val pcmBuf = mutableListOf<Byte>()
-            val chunk = ShortArray(bufferSize / 2)
-            val startMs = System.currentTimeMillis()
+            val pcm = mutableListOf<Byte>()
+            val chunk = ShortArray(bufSize / 2)
+            val start = System.currentTimeMillis()
 
-            // Enregistre max 10s ou jusqu'à stopRecording()
-            while (isActive && isRecording && System.currentTimeMillis() - startMs < 10_000) {
+            while (isActive && isRecording && System.currentTimeMillis() - start < 12_000) {
                 val n = recorder.read(chunk, 0, chunk.size)
                 if (n > 0) {
+                    // Calcul amplitude pour animation
+                    val rms = kotlin.math.sqrt(chunk.take(n)
+                        .map { it.toDouble() * it }.average()).toFloat()
+                    withContext(Dispatchers.Main) { binding.waveView.setAmplitude(rms) }
+
                     for (i in 0 until n) {
-                        pcmBuf.add((chunk[i].toInt() and 0xFF).toByte())
-                        pcmBuf.add((chunk[i].toInt() shr 8).toByte())
+                        pcm.add((chunk[i].toInt() and 0xFF).toByte())
+                        pcm.add((chunk[i].toInt() shr 8).toByte())
                     }
                 }
             }
             recorder.stop(); recorder.release()
+            isRecording = false
 
-            val pcm = pcmBuf.toByteArray()
             if (pcm.size < SAMPLE_RATE / 2) {
                 withContext(Dispatchers.Main) {
-                    isRecording = false; binding.btnMic.text = "🎙"
-                    setStatus("Trop court — réessaie")
+                    binding.waveView.setState(EliseWaveView.State.LISTENING)
+                    setStatus("Trop court — appuie et parle")
                 }
                 return@launch
             }
 
             withContext(Dispatchers.Main) {
-                isRecording = false; binding.btnMic.text = "🎙"
-                setStatus("Traitement…")
+                binding.waveView.setState(EliseWaveView.State.PROCESSING)
+                setStatus("Élise réfléchit…")
             }
 
             try {
-                val wav = EliseClient.pcmToWav(pcm)
+                val wav = EliseClient.pcmToWav(pcm.toByteArray())
                 val response = EliseClient.sendVoice(wav, TOKEN)
 
                 withContext(Dispatchers.Main) {
-                    setStatus("Élise : ${response.responseText.take(80)}")
+                    binding.waveView.setState(EliseWaveView.State.SPEAKING)
+                    val preview = if (response.responseText.length > 100)
+                        response.responseText.take(97) + "…"
+                    else response.responseText
+                    setStatus(preview)
                 }
 
                 if (response.mp3Bytes.isNotEmpty()) {
                     playMp3(response.mp3Bytes)
                 }
+
+                withContext(Dispatchers.Main) {
+                    binding.waveView.setState(EliseWaveView.State.LISTENING)
+                    setStatus("Appuie pour parler à Élise")
+                }
             } catch (e: Exception) {
                 Log.e(TAG, "Erreur: ${e.message}")
                 withContext(Dispatchers.Main) {
-                    setStatus("Erreur : ${e.message?.take(60)}")
+                    binding.waveView.setState(EliseWaveView.State.ERROR)
+                    setStatus("Connexion impossible — vérifie internet")
+                    delay(2000)
+                    binding.waveView.setState(EliseWaveView.State.LISTENING)
+                    setStatus("Appuie pour réessayer")
                 }
             }
         }
@@ -126,26 +143,28 @@ class MainActivity : AppCompatActivity() {
 
     private fun stopRecording() {
         isRecording = false
-        recordJob?.cancel()
-        binding.btnMic.text = "🎙"
-        setStatus("Traitement…")
     }
 
-    private fun playMp3(mp3Bytes: ByteArray) {
+    private fun playMp3(mp3: ByteArray) {
         try {
-            val tmp = File(cacheDir, "elise_response.mp3")
-            tmp.writeBytes(mp3Bytes)
+            val tmp = File(cacheDir, "elise_resp.mp3")
+            tmp.writeBytes(mp3)
             val player = MediaPlayer()
             player.setDataSource(tmp.absolutePath)
             player.prepare()
             player.start()
             player.setOnCompletionListener { it.release() }
         } catch (e: Exception) {
-            Log.e(TAG, "Playback error: ${e.message}")
+            Log.e(TAG, "Playback: ${e.message}")
         }
     }
 
     private fun setStatus(text: String) {
         binding.tvStatus.text = text
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        scope.cancel()
     }
 }
