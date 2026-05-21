@@ -29,7 +29,6 @@ import java.io.File
 private const val TAG = "EliseOverlay"
 private const val CHANNEL_ID = "elise_overlay"
 private const val NOTIF_ID = 42
-private const val SAMPLE_RATE = 16000
 private const val ACTION_SET_CALL_MODE = "elise.SET_CALL_MODE"
 
 class EliseOverlayService : Service() {
