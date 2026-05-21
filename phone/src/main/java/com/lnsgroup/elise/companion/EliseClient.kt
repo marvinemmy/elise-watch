@@ -24,37 +24,53 @@ object EliseClient {
         .writeTimeout(30, TimeUnit.SECONDS)
         .build()
 
+    /**
+     * Protocole serveur :
+     * → binary WAV bytes (complet)
+     * → JSON {"type":"end"}
+     * ← JSON {"type":"ready"}
+     * ← JSON {"type":"processing"}
+     * ← JSON {"type":"response_start","transcript":"...","size":N}
+     * ← binary MP3 chunks
+     * ← JSON {"type":"response_end"}
+     * [connexion fermée par serveur]
+     */
     suspend fun sendVoice(wavBytes: ByteArray, token: String): EliseResponse =
         suspendCancellableCoroutine { cont ->
             val request = Request.Builder()
-                .url("${BuildConfig.API_BASE_URL}/ws/voice")
-                .header("Authorization", "Bearer $token")
+                .url("${BuildConfig.API_BASE_URL}/ws/voice?token=$token")
                 .build()
 
             var transcript = ""
             var responseText = ""
             val mp3Buf = mutableListOf<Byte>()
-            var done = false
 
             val ws = client.newWebSocket(request, object : WebSocketListener() {
                 override fun onOpen(webSocket: WebSocket, response: Response) {
-                    // Envoie le WAV en binaire
+                    // Envoie le WAV complet puis signal de fin
                     webSocket.send(wavBytes.toByteString())
+                    webSocket.send("""{"type":"end"}""")
                 }
 
                 override fun onMessage(webSocket: WebSocket, text: String) {
                     try {
                         val json = JSONObject(text)
                         when (json.optString("type")) {
-                            "transcript" -> transcript = json.optString("text", "")
-                            "response"   -> responseText = json.optString("text", "")
-                            "done"       -> {
-                                done = true
+                            "ready"           -> { /* serveur prêt */ }
+                            "processing"      -> { /* traitement en cours */ }
+                            "response_start"  -> {
+                                // Le serveur envoie transcript + taille MP3 ici
+                                transcript = json.optString("transcript", "")
+                                responseText = transcript
+                            }
+                            "response_end"    -> {
+                                // Toutes les données reçues — fermer proprement
                                 webSocket.close(1000, "done")
                             }
                             "error" -> {
                                 webSocket.close(1000, "error")
-                                cont.resumeWithException(Exception(json.optString("message")))
+                                if (!cont.isCompleted)
+                                    cont.resumeWithException(Exception(json.optString("message")))
                             }
                         }
                     } catch (e: Exception) {
@@ -63,6 +79,7 @@ object EliseClient {
                 }
 
                 override fun onMessage(webSocket: WebSocket, bytes: ByteString) {
+                    // Chunks MP3
                     mp3Buf.addAll(bytes.toByteArray().toList())
                 }
 
@@ -71,9 +88,8 @@ object EliseClient {
                 }
 
                 override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
-                    if (!cont.isCompleted) {
+                    if (!cont.isCompleted)
                         cont.resume(EliseResponse(transcript, responseText, mp3Buf.toByteArray()))
-                    }
                 }
 
                 override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
@@ -84,7 +100,7 @@ object EliseClient {
             cont.invokeOnCancellation { ws.cancel() }
         }
 
-    fun pcmToWav(pcm: ByteArray, sampleRate: Int = 16000): ByteArray {
+    fun pcmToWav(pcm: ByteArray, sampleRate: Int = SAMPLE_RATE): ByteArray {
         val bb = ByteBuffer.allocate(44 + pcm.size).order(ByteOrder.LITTLE_ENDIAN)
         bb.put("RIFF".toByteArray()); bb.putInt(36 + pcm.size)
         bb.put("WAVE".toByteArray()); bb.put("fmt ".toByteArray())

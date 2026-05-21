@@ -81,6 +81,13 @@
             android:foregroundServiceType="microphone|camera|location"
             android:exported="false" />
 
+        <!-- Interface enrôlement / reconnaissance faciale -->
+        <activity
+            android:name=".FaceScanActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:label="ÉLISE — Visage" />
+
         <!-- Détection d'appels téléphoniques -->
         <service
             android:name=".EliseCallMonitor"
