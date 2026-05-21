@@ -184,7 +184,7 @@ class EliseForegroundService : Service() {
     }
 
     private fun buildNotification(state: EliseState, detail: String = ""): Notification {
-        val icon = android.R.drawable.ic_btn_speak_now
+        val icon = com.lnsgroup.elise.watch.R.drawable.ic_elise
         val text = when (state) {
             EliseState.LISTENING -> "En écoute — dites « Ok Élise »"
             EliseState.RECORDING -> "Je t'écoute..."
