@@ -8,15 +8,13 @@
 
     <ImageView
         android:id="@+id/ivLogo"
-        android:layout_width="80dp"
-        android:layout_height="80dp"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
         android:src="@drawable/ic_elise"
-        app:layout_constraintBottom_toTopOf="@id/tvTitle"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_chainStyle="packed"
-        android:layout_marginBottom="24dp" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="48dp" />
 
     <TextView
         android:id="@+id/tvTitle"
@@ -24,67 +22,53 @@
         android:layout_height="wrap_content"
         android:text="ÉLISE"
         android:textColor="#00E5FF"
-        android:textSize="36sp"
-        android:letterSpacing="0.15"
+        android:textSize="32sp"
         android:fontFamily="sans-serif-light"
-        app:layout_constraintBottom_toTopOf="@id/tvSubtitle"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
+        android:letterSpacing="0.2"
         app:layout_constraintTop_toBottomOf="@id/ivLogo"
-        android:layout_marginBottom="8dp" />
-
-    <TextView
-        android:id="@+id/tvSubtitle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Companion · Galaxy Watch"
-        android:textColor="#4A7A8A"
-        android:textSize="13sp"
-        android:letterSpacing="0.1"
-        app:layout_constraintBottom_toTopOf="@id/tvVersion"
-        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tvTitle"
-        android:layout_marginBottom="4dp" />
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="12dp" />
 
     <TextView
         android:id="@+id/tvVersion"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="v1.0.0"
+        android:text="v1.0"
         android:textColor="#2A4A5A"
         android:textSize="11sp"
-        app:layout_constraintBottom_toTopOf="@id/tvStatus"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tvTitle"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tvSubtitle"
-        android:layout_marginBottom="48dp" />
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="4dp" />
 
+    <!-- Bouton micro central -->
+    <Button
+        android:id="@+id/btnMic"
+        android:layout_width="96dp"
+        android:layout_height="96dp"
+        android:text="🎙"
+        android:textSize="36sp"
+        android:backgroundTint="#1A00E5FF"
+        android:padding="0dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Statut / réponse d'Élise -->
     <TextView
         android:id="@+id/tvStatus"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="Vérification des mises à jour…"
+        android:text="Appuie sur le micro pour parler à Élise"
         android:textColor="#4A7A8A"
-        android:textSize="13sp"
-        app:layout_constraintBottom_toTopOf="@id/btnUpdate"
-        app:layout_constraintEnd_toEndOf="parent"
+        android:textSize="14sp"
+        android:gravity="center"
+        android:padding="16dp"
+        app:layout_constraintTop_toBottomOf="@id/btnMic"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tvVersion"
-        android:layout_marginBottom="16dp" />
-
-    <Button
-        android:id="@+id/btnUpdate"
-        android:layout_width="200dp"
-        android:layout_height="wrap_content"
-        android:text="Vérifier mise à jour"
-        android:textColor="#010A10"
-        android:backgroundTint="#00E5FF"
-        android:textSize="13sp"
-        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tvStatus"
-        android:layout_marginBottom="80dp" />
+        android:layout_marginTop="32dp" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
