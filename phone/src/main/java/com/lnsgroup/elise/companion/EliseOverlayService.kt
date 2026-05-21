@@ -1,0 +1,198 @@
+package com.lnsgroup.elise.companion
+
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.app.Service
+import android.content.Context
+import android.content.Intent
+import android.graphics.PixelFormat
+import android.media.AudioFormat
+import android.media.AudioRecord
+import android.media.MediaPlayer
+import android.media.MediaRecorder
+import android.os.IBinder
+import android.provider.Settings
+import android.util.Log
+import android.view.Gravity
+import android.view.MotionEvent
+import android.view.WindowManager
+import androidx.core.app.NotificationCompat
+import kotlinx.coroutines.*
+import java.io.File
+
+private const val TAG = "EliseOverlay"
+private const val CHANNEL_ID = "elise_overlay"
+private const val NOTIF_ID = 42
+private const val SAMPLE_RATE = 16000
+
+class EliseOverlayService : Service() {
+
+    private lateinit var wm: WindowManager
+    private lateinit var overlayView: EliseOverlayView
+    private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+    private var isRecording = false
+
+    override fun onBind(intent: Intent?): IBinder? = null
+
+    override fun onCreate() {
+        super.onCreate()
+        createNotificationChannel()
+        startForeground(NOTIF_ID, buildNotification())
+
+        wm = getSystemService(WINDOW_SERVICE) as WindowManager
+        overlayView = EliseOverlayView(this)
+        overlayView.onTap = { toggleRecording() }
+
+        val params = WindowManager.LayoutParams(
+            WindowManager.LayoutParams.WRAP_CONTENT,
+            WindowManager.LayoutParams.WRAP_CONTENT,
+            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                    WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
+            PixelFormat.TRANSLUCENT
+        ).apply {
+            gravity = Gravity.END or Gravity.CENTER_VERTICAL
+            x = 0
+            y = 0
+        }
+
+        enableDrag(params)
+        wm.addView(overlayView, params)
+    }
+
+    private fun enableDrag(params: WindowManager.LayoutParams) {
+        var initX = 0; var initY = 0; var initTX = 0; var initTY = 0
+        overlayView.setOnTouchListener { _, ev ->
+            when (ev.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    initX = params.x; initY = params.y
+                    initTX = ev.rawX.toInt(); initTY = ev.rawY.toInt()
+                    false
+                }
+                MotionEvent.ACTION_MOVE -> {
+                    val dx = ev.rawX.toInt() - initTX
+                    val dy = ev.rawY.toInt() - initTY
+                    if (dx * dx + dy * dy > 100) {
+                        params.x = initX - dx
+                        params.y = initY + dy
+                        wm.updateViewLayout(overlayView, params)
+                        true
+                    } else false
+                }
+                else -> false
+            }
+        }
+    }
+
+    private fun toggleRecording() {
+        if (isRecording) {
+            isRecording = false
+        } else {
+            startVoiceCapture()
+        }
+    }
+
+    private fun startVoiceCapture() {
+        isRecording = true
+        overlayView.setState(EliseWaveView.State.RECORDING)
+
+        val bufSize = AudioRecord.getMinBufferSize(
+            SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT
+        ).coerceAtLeast(SAMPLE_RATE / 5 * 2)
+
+        scope.launch(Dispatchers.IO) {
+            val recorder = AudioRecord(
+                MediaRecorder.AudioSource.MIC, SAMPLE_RATE,
+                AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, bufSize * 4
+            )
+            recorder.startRecording()
+            val pcm = mutableListOf<Byte>()
+            val chunk = ShortArray(bufSize / 2)
+            val start = System.currentTimeMillis()
+
+            while (isActive && isRecording && System.currentTimeMillis() - start < 12_000) {
+                val n = recorder.read(chunk, 0, chunk.size)
+                if (n > 0) {
+                    val rms = kotlin.math.sqrt(chunk.take(n).map { it.toDouble() * it }.average()).toFloat()
+                    withContext(Dispatchers.Main) { overlayView.setAmplitude(rms) }
+                    for (i in 0 until n) {
+                        pcm.add((chunk[i].toInt() and 0xFF).toByte())
+                        pcm.add((chunk[i].toInt() shr 8).toByte())
+                    }
+                }
+            }
+            recorder.stop(); recorder.release()
+            isRecording = false
+
+            if (pcm.size < SAMPLE_RATE / 2) {
+                withContext(Dispatchers.Main) { overlayView.setState(EliseWaveView.State.LISTENING) }
+                return@launch
+            }
+
+            withContext(Dispatchers.Main) { overlayView.setState(EliseWaveView.State.PROCESSING) }
+
+            try {
+                val wav = EliseClient.pcmToWav(pcm.toByteArray())
+                val response = EliseClient.sendVoice(wav, TOKEN)
+                withContext(Dispatchers.Main) { overlayView.setState(EliseWaveView.State.SPEAKING) }
+                if (response.mp3Bytes.isNotEmpty()) playMp3(response.mp3Bytes)
+            } catch (e: Exception) {
+                Log.e(TAG, "Error: ${e.message}")
+                withContext(Dispatchers.Main) { overlayView.setState(EliseWaveView.State.ERROR) }
+                delay(1500)
+            }
+            withContext(Dispatchers.Main) { overlayView.setState(EliseWaveView.State.LISTENING) }
+        }
+    }
+
+    private fun playMp3(mp3: ByteArray) {
+        try {
+            val tmp = File(cacheDir, "elise_overlay.mp3")
+            tmp.writeBytes(mp3)
+            val player = MediaPlayer()
+            player.setDataSource(tmp.absolutePath)
+            player.prepare()
+            player.start()
+            player.setOnCompletionListener { it.release() }
+        } catch (e: Exception) {
+            Log.e(TAG, "Playback: ${e.message}")
+        }
+    }
+
+    private fun createNotificationChannel() {
+        val ch = NotificationChannel(CHANNEL_ID, "ÉLISE Active", NotificationManager.IMPORTANCE_LOW)
+        ch.description = "ÉLISE overlay actif"
+        getSystemService(NotificationManager::class.java).createNotificationChannel(ch)
+    }
+
+    private fun buildNotification(): Notification {
+        val openIntent = PendingIntent.getActivity(
+            this, 0, Intent(this, MainActivity::class.java),
+            PendingIntent.FLAG_IMMUTABLE
+        )
+        return NotificationCompat.Builder(this, CHANNEL_ID)
+            .setContentTitle("ÉLISE")
+            .setContentText("Overlay actif — appuie pour parler")
+            .setSmallIcon(android.R.drawable.ic_media_play)
+            .setContentIntent(openIntent)
+            .setOngoing(true)
+            .build()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        scope.cancel()
+        try { wm.removeView(overlayView) } catch (_: Exception) {}
+    }
+
+    companion object {
+        fun start(ctx: Context) {
+            ctx.startForegroundService(Intent(ctx, EliseOverlayService::class.java))
+        }
+        fun stop(ctx: Context) {
+            ctx.stopService(Intent(ctx, EliseOverlayService::class.java))
+        }
+    }
+}

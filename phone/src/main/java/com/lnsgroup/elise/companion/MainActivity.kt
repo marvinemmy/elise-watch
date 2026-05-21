@@ -1,12 +1,15 @@
 package com.lnsgroup.elise.companion
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaPlayer
 import android.media.MediaRecorder
+import android.net.Uri
 import android.os.Bundle
+import android.provider.Settings
 import android.util.Log
 import android.view.MotionEvent
 import androidx.activity.result.contract.ActivityResultContracts
@@ -39,14 +42,34 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
         binding.tvVersion.text = "v${BuildConfig.VERSION_NAME}"
 
-        // Tap n'importe où pour parler
         binding.root.setOnClickListener { onMicTap() }
         binding.btnMic.setOnClickListener { onMicTap() }
 
         setStatus("Appuie pour parler à Élise")
 
+        checkOverlayPermission()
+
         UpdateChecker.checkAsync(this) { status ->
             if (!status.startsWith("À jour")) setStatus(status)
+        }
+    }
+
+    private fun checkOverlayPermission() {
+        if (Settings.canDrawOverlays(this)) {
+            EliseOverlayService.start(this)
+        } else {
+            setStatus("Autoriser l'overlay pour utiliser Élise partout")
+            startActivity(
+                Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                    Uri.parse("package:$packageName"))
+            )
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (Settings.canDrawOverlays(this)) {
+            EliseOverlayService.start(this)
         }
     }
 
