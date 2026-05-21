@@ -26,6 +26,7 @@ private const val TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc19hZG1pbiI6
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
+    private lateinit var permManager: ElisePermissionManager
     private var isRecording = false
     private var scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
@@ -45,29 +46,32 @@ class MainActivity : AppCompatActivity() {
         binding.root.setOnClickListener { onMicTap() }
         binding.btnMic.setOnClickListener { onMicTap() }
 
-        setStatus("Appuie pour parler à Élise")
+        // Gestionnaire de permissions centralisé
+        permManager = ElisePermissionManager(this)
+        permManager.register()
+        permManager.requestAll {
+            startEliseServices()
+        }
 
-        checkOverlayPermission()
+        setStatus("Appuie pour parler à Élise")
 
         UpdateChecker.checkAsync(this) { status ->
             if (!status.startsWith("À jour")) setStatus(status)
         }
     }
 
-    private fun checkOverlayPermission() {
+    private fun startEliseServices() {
         if (Settings.canDrawOverlays(this)) {
             EliseOverlayService.start(this)
-        } else {
-            setStatus("Autoriser l'overlay pour utiliser Élise partout")
-            startActivity(
-                Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                    Uri.parse("package:$packageName"))
-            )
+        }
+        if (permManager.hasPhone()) {
+            EliseCallMonitor.start(this)
         }
     }
 
     override fun onResume() {
         super.onResume()
+        // Re-vérifie au retour (l'utilisateur vient peut-être d'accorder l'overlay)
         if (Settings.canDrawOverlays(this)) {
             EliseOverlayService.start(this)
         }
@@ -104,11 +108,9 @@ class MainActivity : AppCompatActivity() {
             while (isActive && isRecording && System.currentTimeMillis() - start < 12_000) {
                 val n = recorder.read(chunk, 0, chunk.size)
                 if (n > 0) {
-                    // Calcul amplitude pour animation
                     val rms = kotlin.math.sqrt(chunk.take(n)
                         .map { it.toDouble() * it }.average()).toFloat()
                     withContext(Dispatchers.Main) { binding.waveView.setAmplitude(rms) }
-
                     for (i in 0 until n) {
                         pcm.add((chunk[i].toInt() and 0xFF).toByte())
                         pcm.add((chunk[i].toInt() shr 8).toByte())

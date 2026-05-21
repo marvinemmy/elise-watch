@@ -7,6 +7,7 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.graphics.Color
 import android.graphics.PixelFormat
 import android.media.AudioFormat
 import android.media.AudioRecord
@@ -16,8 +17,11 @@ import android.os.IBinder
 import android.provider.Settings
 import android.util.Log
 import android.view.Gravity
+import android.view.LayoutInflater
 import android.view.MotionEvent
+import android.view.View
 import android.view.WindowManager
+import android.widget.TextView
 import androidx.core.app.NotificationCompat
 import kotlinx.coroutines.*
 import java.io.File
@@ -26,13 +30,17 @@ private const val TAG = "EliseOverlay"
 private const val CHANNEL_ID = "elise_overlay"
 private const val NOTIF_ID = 42
 private const val SAMPLE_RATE = 16000
+private const val ACTION_SET_CALL_MODE = "elise.SET_CALL_MODE"
 
 class EliseOverlayService : Service() {
 
     private lateinit var wm: WindowManager
     private lateinit var overlayView: EliseOverlayView
+    private var textCard: View? = null
+    private var tvMessage: TextView? = null
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     private var isRecording = false
+    private var callMode = false  // true = appel en cours, voix coupée, texte only
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -60,6 +68,72 @@ class EliseOverlayService : Service() {
 
         enableDrag(params)
         wm.addView(overlayView, params)
+
+        // Carte texte pour les messages en mode appel
+        setupTextCard()
+    }
+
+    private fun setupTextCard() {
+        val card = TextView(this).apply {
+            text = ""
+            textSize = 13f
+            setTextColor(Color.parseColor("#00E5FF"))
+            setBackgroundColor(Color.parseColor("#CC010A10"))
+            setPadding(24, 16, 24, 16)
+            maxLines = 4
+            visibility = View.GONE
+        }
+        val cardParams = WindowManager.LayoutParams(
+            WindowManager.LayoutParams.WRAP_CONTENT,
+            WindowManager.LayoutParams.WRAP_CONTENT,
+            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+            PixelFormat.TRANSLUCENT
+        ).apply {
+            gravity = Gravity.TOP or Gravity.CENTER_HORIZONTAL
+            y = 120
+            width = (resources.displayMetrics.widthPixels * 0.85f).toInt()
+        }
+        wm.addView(card, cardParams)
+        textCard = card
+        tvMessage = card
+    }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        val isCall = intent?.getBooleanExtra("call_mode", false) ?: false
+        if (intent?.action == ACTION_SET_CALL_MODE) {
+            setCallModeInternal(isCall)
+        }
+        return START_STICKY
+    }
+
+    private fun setCallModeInternal(active: Boolean) {
+        callMode = active
+        if (active) {
+            // Appel en cours : orbe devient orange, carte texte visible
+            overlayView.setState(EliseWaveView.State.PROCESSING)
+            textCard?.visibility = View.VISIBLE
+            tvMessage?.text = "ÉLISE — mode appel actif\nJe t'envoie les infos par écrit"
+            // Cacher le message après 3s
+            scope.launch {
+                delay(3000)
+                if (callMode) tvMessage?.text = ""
+            }
+            if (isRecording) isRecording = false  // couper l'enregistrement en cours
+        } else {
+            // Fin d'appel
+            textCard?.visibility = View.GONE
+            overlayView.setState(EliseWaveView.State.LISTENING)
+        }
+    }
+
+    fun showTextMessage(text: String) {
+        tvMessage?.text = text
+        textCard?.visibility = View.VISIBLE
+        scope.launch {
+            delay(8000)
+            textCard?.visibility = View.GONE
+        }
     }
 
     private fun enableDrag(params: WindowManager.LayoutParams) {
@@ -87,6 +161,11 @@ class EliseOverlayService : Service() {
     }
 
     private fun toggleRecording() {
+        if (callMode) {
+            // En appel : pas d'enregistrement vocal, afficher un message
+            showTextMessage("Tu es en appel. Dis-moi ce dont tu as besoin par geste.")
+            return
+        }
         if (isRecording) {
             isRecording = false
         } else {
@@ -136,8 +215,18 @@ class EliseOverlayService : Service() {
             try {
                 val wav = EliseClient.pcmToWav(pcm.toByteArray())
                 val response = EliseClient.sendVoice(wav, TOKEN)
-                withContext(Dispatchers.Main) { overlayView.setState(EliseWaveView.State.SPEAKING) }
-                if (response.mp3Bytes.isNotEmpty()) playMp3(response.mp3Bytes)
+                withContext(Dispatchers.Main) {
+                    if (callMode) {
+                        // En appel : afficher le texte, pas de son
+                        val preview = if (response.responseText.length > 200)
+                            response.responseText.take(197) + "…"
+                        else response.responseText
+                        showTextMessage(preview)
+                    } else {
+                        overlayView.setState(EliseWaveView.State.SPEAKING)
+                        if (response.mp3Bytes.isNotEmpty()) playMp3(response.mp3Bytes)
+                    }
+                }
             } catch (e: Exception) {
                 Log.e(TAG, "Error: ${e.message}")
                 withContext(Dispatchers.Main) { overlayView.setState(EliseWaveView.State.ERROR) }
@@ -185,6 +274,7 @@ class EliseOverlayService : Service() {
         super.onDestroy()
         scope.cancel()
         try { wm.removeView(overlayView) } catch (_: Exception) {}
+        try { textCard?.let { wm.removeView(it) } } catch (_: Exception) {}
     }
 
     companion object {
@@ -193,6 +283,14 @@ class EliseOverlayService : Service() {
         }
         fun stop(ctx: Context) {
             ctx.stopService(Intent(ctx, EliseOverlayService::class.java))
+        }
+        fun setCallMode(ctx: Context, active: Boolean) {
+            ctx.startForegroundService(
+                Intent(ctx, EliseOverlayService::class.java).apply {
+                    action = ACTION_SET_CALL_MODE
+                    putExtra("call_mode", active)
+                }
+            )
         }
     }
 }
