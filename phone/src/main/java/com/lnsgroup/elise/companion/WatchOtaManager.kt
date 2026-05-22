@@ -65,7 +65,7 @@ object WatchOtaManager {
                 Wearable.getNodeClient(context).connectedNodes, 10, TimeUnit.SECONDS
             )
             val watch = nodes.firstOrNull()
-                ?: return "Montre non connectée (v1.0.$serverVersion disponible, sera poussée à la prochaine connexion)"
+                ?: return "Montre non visible via Wearable (${nodes.size} nœuds) — v1.0.$serverVersion disponible. La montre se mettra à jour seule au prochain démarrage de l'app Élise."
 
             // 4. Envoyer l'APK à la montre via Wearable Channel
             val channelClient = Wearable.getChannelClient(context)

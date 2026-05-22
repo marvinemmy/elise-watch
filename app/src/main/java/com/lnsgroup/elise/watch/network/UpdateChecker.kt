@@ -1,22 +1,18 @@
 package com.lnsgroup.elise.watch.network
 
-import android.app.Activity
+import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageInstaller
-import android.net.Uri
-import android.os.Build
 import android.util.Log
-import androidx.core.content.FileProvider
 import com.lnsgroup.elise.watch.BuildConfig
+import com.lnsgroup.elise.watch.service.OtaInstallReceiver
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONObject
-import java.io.File
 import java.util.concurrent.TimeUnit
 
 private const val TAG = "UpdateChecker"
@@ -27,7 +23,7 @@ object UpdateChecker {
 
     private val client = OkHttpClient.Builder()
         .connectTimeout(10, TimeUnit.SECONDS)
-        .readTimeout(60, TimeUnit.SECONDS)
+        .readTimeout(120, TimeUnit.SECONDS)
         .build()
 
     fun checkAsync(context: Context) {
@@ -41,58 +37,54 @@ object UpdateChecker {
                 val json = JSONObject(body)
                 val latestCode = json.optInt("version_code", 0)
                 val apkUrl = json.optString("apk_url", "")
-                if (latestCode <= BuildConfig.VERSION_CODE || apkUrl.isBlank()) return@launch
-
-                Log.i(TAG, "Update available: v$latestCode > current ${BuildConfig.VERSION_CODE}")
-                val apkBytes = downloadApk(apkUrl) ?: return@launch
-                val apkFile = saveApk(context, apkBytes) ?: return@launch
-
-                withContext(Dispatchers.Main) {
-                    installApk(context, apkFile)
+                if (latestCode <= BuildConfig.VERSION_CODE || apkUrl.isBlank()) {
+                    Log.d(TAG, "Already up to date: v${BuildConfig.VERSION_CODE} (server: v$latestCode)")
+                    return@launch
                 }
+
+                Log.i(TAG, "Update: v${BuildConfig.VERSION_CODE} → v$latestCode — downloading")
+                val apkBytes = downloadApk(apkUrl) ?: return@launch
+                Log.i(TAG, "APK downloaded (${apkBytes.size}B) — installing via PackageInstaller")
+                installViaPackageInstaller(context, apkBytes, latestCode)
             } catch (e: Exception) {
                 Log.w(TAG, "Update check failed: ${e.message}")
             }
         }
     }
 
-    private fun downloadApk(url: String): ByteArray? {
-        return try {
-            val req = Request.Builder().url(url).build()
-            client.newCall(req).execute().use { resp ->
-                if (!resp.isSuccessful) null else resp.body?.bytes()
-            }
-        } catch (e: Exception) {
-            Log.w(TAG, "APK download failed: ${e.message}")
-            null
+    private fun downloadApk(url: String): ByteArray? = try {
+        val req = Request.Builder().url(url).build()
+        client.newCall(req).execute().use { resp ->
+            if (!resp.isSuccessful) { Log.w(TAG, "Download HTTP ${resp.code}"); null }
+            else resp.body?.bytes()
         }
+    } catch (e: Exception) {
+        Log.w(TAG, "APK download failed: ${e.message}"); null
     }
 
-    private fun saveApk(context: Context, bytes: ByteArray): File? {
-        return try {
-            val file = File(context.cacheDir, "elise-update.apk")
-            file.writeBytes(bytes)
-            file
-        } catch (e: Exception) {
-            Log.w(TAG, "APK save failed: ${e.message}")
-            null
-        }
-    }
-
-    private fun installApk(context: Context, apkFile: File) {
+    private fun installViaPackageInstaller(context: Context, apkBytes: ByteArray, versionCode: Int) {
         try {
-            val uri = FileProvider.getUriForFile(
-                context,
-                "${context.packageName}.fileprovider",
-                apkFile
-            )
-            val intent = Intent(Intent.ACTION_VIEW).apply {
-                setDataAndType(uri, "application/vnd.android.package-archive")
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
+            val installer = context.packageManager.packageInstaller
+            val params = PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL)
+            params.setAppPackageName(context.packageName)
+            val sessionId = installer.createSession(params)
+            installer.openSession(sessionId).use { session ->
+                session.openWrite("elise.apk", 0, apkBytes.size.toLong()).use { out ->
+                    out.write(apkBytes)
+                    session.fsync(out)
+                }
+                val intent = Intent(context, OtaInstallReceiver::class.java).apply {
+                    putExtra("version_code", versionCode)
+                }
+                val pi = PendingIntent.getBroadcast(
+                    context, sessionId, intent,
+                    PendingIntent.FLAG_MUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+                )
+                session.commit(pi.intentSender)
             }
-            context.startActivity(intent)
+            Log.i(TAG, "PackageInstaller session committed for v1.0.$versionCode")
         } catch (e: Exception) {
-            Log.w(TAG, "Install intent failed: ${e.message}")
+            Log.e(TAG, "installViaPackageInstaller failed: ${e.message}")
         }
     }
 }
