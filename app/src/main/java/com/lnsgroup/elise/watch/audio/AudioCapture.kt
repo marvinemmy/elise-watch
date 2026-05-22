@@ -3,6 +3,7 @@ package com.lnsgroup.elise.watch.audio
 import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaRecorder
+import android.util.Log
 import com.lnsgroup.elise.watch.Config
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.isActive
@@ -68,13 +69,26 @@ class AudioCapture {
     suspend fun recordUntilSilence(): ByteArray = withContext(Dispatchers.IO) {
         cancelFlag.set(false)
         val out = ByteArrayOutputStream()
-        val rec = AudioRecord(
-            MediaRecorder.AudioSource.MIC,
-            Config.SAMPLE_RATE,
-            Config.CHANNEL_CONFIG,
-            Config.AUDIO_FORMAT,
-            bufferSize * 4
-        )
+
+        // Attendre que le hardware micro soit libéré (stop() vient d'être appelé)
+        var rec: AudioRecord? = null
+        for (attempt in 1..5) {
+            val candidate = AudioRecord(
+                MediaRecorder.AudioSource.MIC,
+                Config.SAMPLE_RATE,
+                Config.CHANNEL_CONFIG,
+                Config.AUDIO_FORMAT,
+                bufferSize * 4
+            )
+            if (candidate.state == AudioRecord.STATE_INITIALIZED) {
+                rec = candidate
+                break
+            }
+            candidate.release()
+            Log.w("AudioCapture", "AudioRecord not ready, attempt $attempt/5")
+            Thread.sleep(150)
+        }
+        if (rec == null) throw IllegalStateException("AudioRecord failed to initialize after 5 attempts")
         rec.startRecording()
 
         val chunkSize = Config.SAMPLE_RATE / 10  // 100ms chunks
@@ -99,6 +113,7 @@ class AudioCapture {
 
                 // Calcul RMS pour détection silence
                 val rms = sqrt(buf.take(n).map { it.toDouble() * it.toDouble() }.average()).toFloat()
+                Log.v("AudioCapture", "chunk rms=$rms silenceMs=$silenceMs")
                 if (rms < Config.SILENCE_THRESHOLD_RMS) {
                     silenceMs += 100
                     if (silenceMs >= Config.SILENCE_DURATION_MS) break
@@ -107,7 +122,7 @@ class AudioCapture {
                 }
             }
         } finally {
-            rec.stop()
+            try { rec.stop() } catch (_: Exception) {}
             rec.release()
         }
 
