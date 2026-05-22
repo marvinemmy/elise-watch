@@ -86,5 +86,6 @@ class EliseCallMonitor : Service() {
 
     companion object {
         fun start(ctx: Context) = ctx.startService(Intent(ctx, EliseCallMonitor::class.java))
+        fun stop(ctx: Context) = ctx.stopService(Intent(ctx, EliseCallMonitor::class.java))
     }
 }
