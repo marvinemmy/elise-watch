@@ -17,7 +17,7 @@ object Config {
 
     // Détection silence (arrêt enregistrement)
     const val SILENCE_THRESHOLD_RMS = 300     // amplitude RMS en dessous = silence
-    const val SILENCE_DURATION_MS = 1800L     // silence de 1.8s = fin de phrase
+    const val SILENCE_DURATION_MS = 600L      // silence de 600ms = fin de phrase (was 1800ms)
     const val MAX_RECORD_MS = 12_000L         // sécurité : max 12 secondes
 
     // Wake word TFLite

@@ -37,7 +37,14 @@ class EliseWebSocket(private val serverUrl: String, private val token: String) {
      *   ← binary MP3 chunks
      *   ← JSON {"type":"response_end"}
      */
-    suspend fun sendVoice(wavBytes: ByteArray): EliseResponse = withContext(Dispatchers.IO) {
+    /**
+     * onChunk: called on OkHttp thread as each MP3 chunk arrives.
+     * Use it to start progressive playback before response_end.
+     */
+    suspend fun sendVoice(
+        wavBytes: ByteArray,
+        onChunk: ((ByteArray) -> Unit)? = null,
+    ): EliseResponse = withContext(Dispatchers.IO) {
         val url = "$serverUrl?token=${token}&v=${com.lnsgroup.elise.watch.BuildConfig.VERSION_CODE}"
         val request = Request.Builder().url(url).build()
 
@@ -99,7 +106,9 @@ class EliseWebSocket(private val serverUrl: String, private val token: String) {
 
                 override fun onMessage(ws: WebSocket, bytes: okio.ByteString) {
                     if (audioStarted) {
-                        mp3Buffer.add(bytes.toByteArray())
+                        val data = bytes.toByteArray()
+                        mp3Buffer.add(data)
+                        onChunk?.invoke(data)
                     }
                 }
 

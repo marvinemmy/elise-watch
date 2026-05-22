@@ -13,6 +13,7 @@ import com.lnsgroup.elise.watch.network.EliseWebSocket
 import com.lnsgroup.elise.watch.ui.EliseState
 import kotlinx.coroutines.*
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 
 private const val TAG = "EliseForegroundService"
 private const val NOTIF_CHANNEL_ID = "elise_listening"
@@ -197,39 +198,83 @@ class EliseForegroundService : Service() {
             ?: run { broadcastState(EliseState.NOT_CONFIGURED); return }
         val serverUrl = prefs.getString(Config.KEY_SERVER_URL, Config.WS_URL) ?: Config.WS_URL
 
-        val response = try {
-            if (com.lnsgroup.elise.watch.network.EliseConnectionHelper.hasDirectInternet()) {
-                // Chemin direct — WebSocket vers lnsgroup.dev
-                val ws = EliseWebSocket(serverUrl, token)
-                try { ws.sendVoice(wav) } finally { ws.shutdown() }
-            } else {
-                // Fallback Bluetooth — proxy via téléphone
-                Log.i(TAG, "No direct internet, routing via phone proxy")
-                broadcastState(EliseState.PROCESSING)
+        if (!com.lnsgroup.elise.watch.network.EliseConnectionHelper.hasDirectInternet()) {
+            // Fallback Bluetooth — proxy via téléphone (pas de streaming progressif)
+            Log.i(TAG, "No direct internet, routing via phone proxy")
+            val response = try {
                 com.lnsgroup.elise.watch.network.EliseConnectionHelper.sendViaPhoneProxy(
                     this, wav, token
                 )
+            } catch (e: Exception) {
+                Log.e(TAG, "proxy error: ${e.message}")
+                throw e
             }
-        } catch (e: Exception) {
-            Log.e(TAG, "processWithElise error: ${e.message}")
-            throw e  // remonté au caller qui gère ERROR + delay
-        }
-
-        val normalised = response.transcript.trim().lowercase().trimEnd('.', '!', '?', ' ')
-        if (normalised in Config.STOP_WORDS) {
-            Log.i(TAG, "Off word: '$normalised'")
+            val normalised = response.transcript.trim().lowercase().trimEnd('.', '!', '?', ' ')
+            if (normalised in Config.STOP_WORDS) return
+            if (response.mp3Bytes.isNotEmpty()) {
+                broadcastState(EliseState.SPEAKING, response.transcript)
+                updateNotification(EliseState.SPEAKING)
+                isSpeaking.set(true)
+                try { audioPlayer.playMp3(response.mp3Bytes) }
+                finally { isSpeaking.set(false) }
+            }
             return
         }
 
-        if (response.mp3Bytes.isNotEmpty()) {
+        // Chemin direct — streaming progressif : on joue le 1er chunk dès son arrivée
+        val pipeOut = audioPlayer.openStreamingPipe()
+        val chunkCount = AtomicInteger(0)
+
+        val response = try {
+            val ws = EliseWebSocket(serverUrl, token)
+            try {
+                ws.sendVoice(wav, onChunk = { chunk ->
+                    val n = chunkCount.incrementAndGet()
+                    if (n == 1) {
+                        // Premier chunk audio reçu → afficher état SPEAKING immédiatement
+                        broadcastState(EliseState.SPEAKING)
+                        updateNotification(EliseState.SPEAKING)
+                        isSpeaking.set(true)
+                    }
+                    try { pipeOut.write(chunk) } catch (_: Exception) {}
+                })
+            } finally {
+                ws.shutdown()
+            }
+        } catch (e: Exception) {
+            try { pipeOut.close() } catch (_: Exception) {}
+            Log.e(TAG, "processWithElise error: ${e.message}")
+            throw e
+        }
+
+        // Fermer le pipe → MediaPlayer reçoit EOF → joue jusqu'à la fin
+        try { pipeOut.close() } catch (_: Exception) {}
+
+        val normalised = response.transcript.trim().lowercase().trimEnd('.', '!', '?', ' ')
+        if (normalised in Config.STOP_WORDS) {
+            audioPlayer.stop()
+            isSpeaking.set(false)
+            return
+        }
+
+        // Si SPEAKING pas encore commencé (réponse vide), broadcast quand même
+        if (chunkCount.get() == 0 && response.mp3Bytes.isNotEmpty()) {
             broadcastState(EliseState.SPEAKING, response.transcript)
             updateNotification(EliseState.SPEAKING)
             isSpeaking.set(true)
+        } else if (chunkCount.get() > 0) {
+            // Mettre à jour la transcription dans le broadcast state
+            broadcastState(EliseState.SPEAKING, response.transcript)
+        }
+
+        if (chunkCount.get() > 0) {
             try {
-                audioPlayer.playMp3(response.mp3Bytes)
+                audioPlayer.awaitStreamingPlayback()
             } finally {
                 isSpeaking.set(false)
             }
+        } else {
+            isSpeaking.set(false)
         }
     }
 
