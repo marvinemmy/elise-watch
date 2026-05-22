@@ -10,9 +10,14 @@ import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.sqrt
 
 class AudioCapture {
+
+    private val cancelFlag = AtomicBoolean(false)
+
+    fun cancelRecording() { cancelFlag.set(true) }
 
     private val bufferSize = AudioRecord.getMinBufferSize(
         Config.SAMPLE_RATE,
@@ -61,6 +66,7 @@ class AudioCapture {
      * Retourne le buffer PCM16 complet.
      */
     suspend fun recordUntilSilence(): ByteArray = withContext(Dispatchers.IO) {
+        cancelFlag.set(false)
         val out = ByteArrayOutputStream()
         val rec = AudioRecord(
             MediaRecorder.AudioSource.MIC,
@@ -79,6 +85,7 @@ class AudioCapture {
 
         try {
             while (isActive) {
+                if (cancelFlag.get()) break
                 val elapsed = System.currentTimeMillis() - startMs
                 if (elapsed >= Config.MAX_RECORD_MS) break
 

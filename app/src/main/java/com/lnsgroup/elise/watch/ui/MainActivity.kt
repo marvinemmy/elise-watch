@@ -24,10 +24,8 @@ class MainActivity : AppCompatActivity() {
     private val stateReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             val stateName = intent.getStringExtra(EliseForegroundService.EXTRA_STATE) ?: return
-            val state = try { EliseState.valueOf(stateName) } catch (e: Exception) { EliseState.IDLE }
-            val detail = intent.getStringExtra("detail") ?: ""
+            val state = try { EliseState.valueOf(stateName) } catch (e: Exception) { EliseState.WAITING }
             binding.particleView.state = state
-            if (detail.isNotEmpty()) binding.particleView.transcript = detail
         }
     }
 
@@ -40,27 +38,32 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Keep screen on while the UI is visible
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        binding.btnMic.setOnClickListener {
-            sendBroadcast(Intent(EliseForegroundService.ACTION_MANUAL_TRIGGER))
+
+        binding.particleView.isClickable = true
+        binding.particleView.setOnClickListener {
+            android.util.Log.d("ELISE_TAP", "tap recu")
+            startService(Intent(this, EliseForegroundService::class.java).apply {
+                action = EliseForegroundService.ACTION_ACTIVATE
+            })
         }
+
+        val filter = IntentFilter(EliseForegroundService.ACTION_STATE_CHANGED)
+        registerReceiver(stateReceiver, filter, RECEIVER_NOT_EXPORTED)
+
         loadPrefs()
         checkPermissions()
         UpdateChecker.checkAsync(this)
     }
 
-    override fun onResume() {
-        super.onResume()
-        val filter = IntentFilter(EliseForegroundService.ACTION_STATE_CHANGED)
-        registerReceiver(stateReceiver, filter, RECEIVER_NOT_EXPORTED)
-    }
-
-    override fun onPause() {
-        super.onPause()
+    override fun onDestroy() {
+        super.onDestroy()
         try { unregisterReceiver(stateReceiver) } catch (_: Exception) {}
+        if (isFinishing) {
+            EliseForegroundService.stop(this)
+        }
     }
 
     private fun checkPermissions() {
@@ -74,12 +77,11 @@ class MainActivity : AppCompatActivity() {
 
     private fun startEliseService() {
         EliseForegroundService.start(this)
-        binding.particleView.state = EliseState.LISTENING
+        binding.particleView.state = EliseState.WAITING
     }
 
     private fun loadPrefs() {
         val prefs = getSharedPreferences(Config.PREF_FILE, Context.MODE_PRIVATE)
-        // Toujours forcer l'URL de production et rafraîchir le token embarqué
         prefs.edit()
             .putString(Config.KEY_SERVER_URL, Config.WS_URL_PROD)
             .apply()

@@ -1,0 +1,26 @@
+[
+    {
+        "merged": "com.lnsgroup.elise.companion.phone-merged_res-34:/drawable_dot_indicator.xml.flat",
+        "source": "com.lnsgroup.elise.companion.phone-main-36:/drawable/dot_indicator.xml"
+    },
+    {
+        "merged": "com.lnsgroup.elise.companion.phone-merged_res-34:/drawable_mic_button.xml.flat",
+        "source": "com.lnsgroup.elise.companion.phone-main-36:/drawable/mic_button.xml"
+    },
+    {
+        "merged": "com.lnsgroup.elise.companion.phone-merged_res-34:/drawable_ic_elise.xml.flat",
+        "source": "com.lnsgroup.elise.companion.phone-main-36:/drawable/ic_elise.xml"
+    },
+    {
+        "merged": "com.lnsgroup.elise.companion.phone-merged_res-34:/drawable_card_glass.xml.flat",
+        "source": "com.lnsgroup.elise.companion.phone-main-36:/drawable/card_glass.xml"
+    },
+    {
+        "merged": "com.lnsgroup.elise.companion.phone-merged_res-34:/xml_file_provider_paths.xml.flat",
+        "source": "com.lnsgroup.elise.companion.phone-main-36:/xml/file_provider_paths.xml"
+    },
+    {
+        "merged": "com.lnsgroup.elise.companion.phone-merged_res-34:/layout_activity_main.xml.flat",
+        "source": "com.lnsgroup.elise.companion.phone-main-36:/layout/activity_main.xml"
+    }
+]

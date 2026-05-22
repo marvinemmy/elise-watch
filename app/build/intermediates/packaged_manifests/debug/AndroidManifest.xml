@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.lnsgroup.elise.watch"
     android:versionCode="1"
-    android:versionName="1.0.0" >
+    android:versionName="1.0.1" >
 
     <uses-sdk
         android:minSdkVersion="30"
@@ -15,6 +15,7 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
     <uses-feature android:name="android.hardware.type.watch" />
     <uses-feature
@@ -35,7 +36,7 @@
         android:icon="@drawable/ic_elise"
         android:label="ELISE"
         android:supportsRtl="true"
-        android:theme="@android:style/Theme.DeviceDefault" >
+        android:theme="@style/Theme.Elise" >
         <uses-library
             android:name="com.google.android.wearable"
             android:required="true" />
@@ -69,6 +70,15 @@
             </intent-filter>
         </receiver>
 
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="com.lnsgroup.elise.watch.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true" >
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_provider_paths" />
+        </provider>
         <provider
             android:name="androidx.startup.InitializationProvider"
             android:authorities="com.lnsgroup.elise.watch.androidx-startup"

@@ -5,22 +5,9 @@
     android:layout_height="match_parent"
     android:background="#010A10">
 
-    <!-- Full-screen 3D particle orb — draws title, status, transcript internally -->
     <com.lnsgroup.elise.watch.ui.EliseParticleView
         android:id="@+id/particleView"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
-
-    <!-- Mic button anchored bottom-centre -->
-    <Button
-        android:id="@+id/btnMic"
-        android:layout_width="44dp"
-        android:layout_height="44dp"
-        android:layout_gravity="bottom|center_horizontal"
-        android:layout_marginBottom="14dp"
-        android:text="&#127897;"
-        android:textSize="18sp"
-        android:background="#1A00E5FF"
-        android:padding="0dp" />
 
 </FrameLayout>

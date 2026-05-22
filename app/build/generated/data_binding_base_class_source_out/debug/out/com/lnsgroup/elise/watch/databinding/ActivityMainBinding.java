@@ -4,7 +4,6 @@ package com.lnsgroup.elise.watch.databinding;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.FrameLayout;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -21,15 +20,11 @@ public final class ActivityMainBinding implements ViewBinding {
   private final FrameLayout rootView;
 
   @NonNull
-  public final Button btnMic;
-
-  @NonNull
   public final EliseParticleView particleView;
 
-  private ActivityMainBinding(@NonNull FrameLayout rootView, @NonNull Button btnMic,
+  private ActivityMainBinding(@NonNull FrameLayout rootView,
       @NonNull EliseParticleView particleView) {
     this.rootView = rootView;
-    this.btnMic = btnMic;
     this.particleView = particleView;
   }
 
@@ -60,19 +55,13 @@ public final class ActivityMainBinding implements ViewBinding {
     // This is done to optimize the compiled bytecode for size and performance.
     int id;
     missingId: {
-      id = R.id.btnMic;
-      Button btnMic = ViewBindings.findChildViewById(rootView, id);
-      if (btnMic == null) {
-        break missingId;
-      }
-
       id = R.id.particleView;
       EliseParticleView particleView = ViewBindings.findChildViewById(rootView, id);
       if (particleView == null) {
         break missingId;
       }
 
-      return new ActivityMainBinding((FrameLayout) rootView, btnMic, particleView);
+      return new ActivityMainBinding((FrameLayout) rootView, particleView);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));

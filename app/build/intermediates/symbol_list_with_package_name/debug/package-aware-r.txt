@@ -860,7 +860,6 @@ id async
 id beginning
 id blocking
 id bottom
-id btnMic
 id butt
 id buttonPanel
 id center
@@ -1393,6 +1392,7 @@ style Theme_AppCompat_Light_Dialog_MinWidth
 style Theme_AppCompat_Light_DialogWhenLarge
 style Theme_AppCompat_Light_NoActionBar
 style Theme_AppCompat_NoActionBar
+style Theme_Elise
 style ThemeOverlay_AppCompat
 style ThemeOverlay_AppCompat_ActionBar
 style ThemeOverlay_AppCompat_Dark
@@ -1546,3 +1546,4 @@ styleable WearableActionDrawerView actionMenu drawerTitle showOverflowInPeek
 styleable WearableDrawerView android_background android_elevation drawerContent enableAutoPeek peekView
 styleable WearableNavigationDrawerView navigationStyle
 styleable WearableRecyclerView bezelWidth circularScrollingGestureEnabled scrollDegreesPerScreen
+xml file_provider_paths

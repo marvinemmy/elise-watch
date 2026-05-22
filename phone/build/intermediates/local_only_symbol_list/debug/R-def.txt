@@ -1,0 +1,14 @@
+R_DEF: Internal format may change without notice
+local
+drawable card_glass
+drawable dot_indicator
+drawable ic_elise
+drawable mic_button
+id tvStatus
+id tvVersion
+id vConnectionDot
+id waveView
+layout activity_main
+string app_name
+style Theme.Elise
+xml file_provider_paths

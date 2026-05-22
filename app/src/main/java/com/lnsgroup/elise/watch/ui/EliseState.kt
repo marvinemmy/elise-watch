@@ -1,11 +1,12 @@
 package com.lnsgroup.elise.watch.ui
 
 enum class EliseState {
+    WAITING,        // veille active — violet/rose
+    LISTENING,      // écoute wake word — cyan
+    RECORDING,      // enregistrement — cyan vif
+    PROCESSING,     // traitement — orange
+    SPEAKING,       // réponse — jaune
+    ERROR,          // erreur — rouge
     IDLE,
-    LISTENING,
-    RECORDING,
-    PROCESSING,
-    SPEAKING,
-    ERROR,
     NOT_CONFIGURED,
 }

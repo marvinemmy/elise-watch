@@ -22,5 +22,9 @@
     {
         "merged": "C:\\Users\\User\\.gradle\\daemon\\8.4\\com.lnsgroup.elise.watch.app-merged_res-31:\\layout_activity_main.xml.flat",
         "source": "C:\\Users\\User\\.gradle\\daemon\\8.4\\com.lnsgroup.elise.watch.app-main-33:\\layout\\activity_main.xml"
+    },
+    {
+        "merged": "C:\\Users\\User\\.gradle\\daemon\\8.4\\com.lnsgroup.elise.watch.app-merged_res-31:\\xml_file_provider_paths.xml.flat",
+        "source": "C:\\Users\\User\\.gradle\\daemon\\8.4\\com.lnsgroup.elise.watch.app-main-33:\\xml\\file_provider_paths.xml"
     }
 ]

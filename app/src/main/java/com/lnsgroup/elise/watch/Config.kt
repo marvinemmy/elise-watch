@@ -26,10 +26,22 @@ object Config {
     const val WAKE_WORD_WINDOW_MS = 1000      // fenêtre d'analyse 1s
     const val WAKE_WORD_COOLDOWN_MS = 3000L   // attente entre deux détections
 
-    // Vibrations
-    const val VIB_WAKE  = 80L    // courte — "je t'écoute"
-    const val VIB_SEND  = 40L    // très courte — "j'envoie"
-    const val VIB_ERROR = 200L   // longue — erreur
+    // Vibrations — uniquement pour PROCESSING
+    const val VIB_PROCESSING_PULSE = 60L   // pulse pendant le traitement
+    const val VIB_PROCESSING_INTERVAL = 900L  // intervalle entre pulses
+
+    // VAD — déclenchement enregistrement par voix dans état LISTENING
+    const val VAD_THRESHOLD_RMS  = 2000f   // amplitude min pour détecter la parole (voix forte uniquement)
+    const val VAD_TRIGGER_MS     = 200L    // durée parole continue avant déclenchement
+
+    // Silence → retour WAITING depuis LISTENING
+    const val SILENCE_TO_WAIT_MS = 3000L
+
+    // Off word — arrêt vocal (normalisé lowercase, sans ponctuation)
+    val STOP_WORDS = setOf(
+        "stop", "arrête", "arrêtes", "arrêter", "annule", "annuler",
+        "silence", "tais-toi", "tais toi", "ça suffit", "ca suffit"
+    )
 
     // Préférences
     const val PREF_FILE = "elise_prefs"

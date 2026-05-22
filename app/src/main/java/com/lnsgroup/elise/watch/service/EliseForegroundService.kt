@@ -1,18 +1,14 @@
 package com.lnsgroup.elise.watch.service
 
 import android.app.*
-import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
 import android.os.*
 import android.util.Log
-import androidx.core.content.ContextCompat
 import androidx.core.app.NotificationCompat
 import com.lnsgroup.elise.watch.Config
 import com.lnsgroup.elise.watch.audio.AudioCapture
 import com.lnsgroup.elise.watch.audio.AudioPlayer
-import com.lnsgroup.elise.watch.audio.WakeWordDetector
 import com.lnsgroup.elise.watch.network.EliseWebSocket
 import com.lnsgroup.elise.watch.ui.EliseState
 import kotlinx.coroutines.*
@@ -26,113 +22,149 @@ class EliseForegroundService : Service() {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private var listeningJob: Job? = null
-    private lateinit var wakeWordDetector: WakeWordDetector
     private lateinit var audioCapture: AudioCapture
     private lateinit var audioPlayer: AudioPlayer
 
-    // État partagé avec l'UI via Intent broadcast
     companion object {
         const val ACTION_STATE_CHANGED = "com.lnsgroup.elise.watch.STATE_CHANGED"
-        const val ACTION_MANUAL_TRIGGER = "com.lnsgroup.elise.watch.MANUAL_TRIGGER"
-        const val EXTRA_STATE = "state"
+        const val ACTION_ACTIVATE      = "com.lnsgroup.elise.watch.ACTIVATE"
+        const val EXTRA_STATE          = "state"
 
         fun start(context: Context) {
-            val intent = Intent(context, EliseForegroundService::class.java)
-            context.startForegroundService(intent)
+            context.startForegroundService(Intent(context, EliseForegroundService::class.java))
         }
-
         fun stop(context: Context) {
             context.stopService(Intent(context, EliseForegroundService::class.java))
         }
     }
 
-    private val manualTrigger = AtomicBoolean(false)
+    private val activateTrigger = AtomicBoolean(false)
+    private val isSpeaking      = AtomicBoolean(false)
 
-    private val manualTriggerReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context, intent: Intent) {
-            Log.i(TAG, "Déclenchement manuel")
-            manualTrigger.set(true)
-        }
-    }
+    @Volatile private var currentState = EliseState.WAITING
 
     override fun onCreate() {
         super.onCreate()
         createNotificationChannel()
-        wakeWordDetector = WakeWordDetector(this)
         audioCapture = AudioCapture()
-        audioPlayer = AudioPlayer(cacheDir)
-        val filter = IntentFilter(ACTION_MANUAL_TRIGGER)
-        ContextCompat.registerReceiver(this, manualTriggerReceiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED)
-        Log.i(TAG, "Service créé")
+        audioPlayer  = AudioPlayer(cacheDir)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        startForeground(NOTIF_ID, buildNotification(EliseState.LISTENING))
-        startListening()
-        return START_STICKY  // redémarre automatiquement si tué
+        if (intent?.action == ACTION_ACTIVATE) {
+            Log.d(TAG, "ACTION_ACTIVATE recu")
+            if (isSpeaking.get()) audioPlayer.stop()
+            else activateTrigger.set(true)
+            return START_STICKY
+        }
+        startForeground(NOTIF_ID, buildNotification(EliseState.WAITING))
+        startMainLoop()
+        return START_NOT_STICKY
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onDestroy() {
         super.onDestroy()
-        try { unregisterReceiver(manualTriggerReceiver) } catch (_: Exception) {}
         listeningJob?.cancel()
         audioCapture.stop()
         audioPlayer.cleanup()
-        wakeWordDetector.close()
         scope.cancel()
-        Log.i(TAG, "Service arrêté")
     }
 
-    // ── Boucle d'écoute permanente ─────────────────────────────────────────────
+    // ── Boucle principale ──────────────────────────────────────────────────────
 
-    private fun startListening() {
+    private fun startMainLoop() {
         listeningJob?.cancel()
         listeningJob = scope.launch {
-            broadcastState(EliseState.LISTENING)
-            Log.i(TAG, "Écoute permanente démarrée")
+            broadcastState(EliseState.WAITING)
+            var isListening    = false
+            var lastActivityMs = System.currentTimeMillis()
+            var vadMs          = 0L   // durée parole continue détectée
+            val chunkMs        = (Config.SAMPLE_RATE.toFloat() / 10 / Config.SAMPLE_RATE * 1000).toLong()
+                                     .coerceAtLeast(80L)  // ~100ms par chunk
 
-            val rec = audioCapture.startContinuous()
+            audioCapture.startContinuous()
 
             while (isActive) {
                 val (samples, rms) = audioCapture.readChunk()
-                if (samples.isEmpty()) continue
+                if (samples.isEmpty()) { delay(10); continue }
 
-                val wakeDetected = wakeWordDetector.process(samples) || manualTrigger.getAndSet(false)
-                if (!wakeDetected) continue
+                // ── Double tap ─────────────────────────────────────────────────
+                if (activateTrigger.getAndSet(false)) {
+                    if (!isListening) {
+                        isListening    = true
+                        lastActivityMs = System.currentTimeMillis()
+                        vadMs          = 0L
+                        broadcastState(EliseState.LISTENING)
+                        updateNotification(EliseState.LISTENING)
+                    } else {
+                        // Déjà en écoute → déclenche immédiatement
+                        vadMs = Config.VAD_TRIGGER_MS + 1
+                    }
+                }
 
-                // ── Wake word détecté ! ────────────────────────────────────────
-                Log.i(TAG, "🎙️  Ok Élise détecté")
-                vibrate(Config.VIB_WAKE)
+                if (!isListening) continue
+
+                // ── Silence → WAITING après 3s ────────────────────────────────
+                if (rms >= Config.SILENCE_THRESHOLD_RMS) lastActivityMs = System.currentTimeMillis()
+                val silenced = System.currentTimeMillis() - lastActivityMs >= Config.SILENCE_TO_WAIT_MS
+                if (silenced && currentState == EliseState.LISTENING) {
+                    isListening = false
+                    vadMs       = 0L
+                    broadcastState(EliseState.WAITING)
+                    updateNotification(EliseState.WAITING)
+                    continue
+                }
+
+                // ── VAD : détection parole → RECORDING ────────────────────────
+                if (rms >= Config.VAD_THRESHOLD_RMS) {
+                    vadMs += chunkMs
+                } else {
+                    vadMs = 0L
+                }
+                if (vadMs < Config.VAD_TRIGGER_MS) continue
+
+                vadMs = 0L
+                lastActivityMs = System.currentTimeMillis()
                 broadcastState(EliseState.RECORDING)
                 updateNotification(EliseState.RECORDING)
 
                 try {
-                    // Enregistrer la phrase jusqu'au silence
                     audioCapture.stop()
+
+                    // Double tap pendant enregistrement = annuler
+                    val cancelJob = launch {
+                        while (isActive) {
+                            if (activateTrigger.getAndSet(false)) {
+                                audioCapture.cancelRecording()
+                                break
+                            }
+                            delay(80)
+                        }
+                    }
                     val pcm = audioCapture.recordUntilSilence()
+                    cancelJob.cancel()
 
                     if (pcm.size < Config.SAMPLE_RATE / 2) {
-                        Log.w(TAG, "Audio trop court, ignoré")
                         broadcastState(EliseState.LISTENING)
                     } else {
-                        val wav = audioCapture.pcmToWav(pcm)
-                        vibrate(Config.VIB_SEND)
                         broadcastState(EliseState.PROCESSING)
                         updateNotification(EliseState.PROCESSING)
-
-                        processWithElise(wav)
+                        startProcessingVibration()
+                        processWithElise(pcm)
                     }
                 } catch (e: Exception) {
-                    Log.e(TAG, "Erreur traitement: ${e.message}")
-                    vibrate(Config.VIB_ERROR)
+                    Log.e(TAG, "Erreur: ${e.message}")
                     broadcastState(EliseState.ERROR)
+                    delay(1500)
                 } finally {
-                    // Reprendre l'écoute permanente
-                    delay(500)
+                    stopProcessingVibration()
+                    delay(400)
                     audioCapture.startContinuous()
-                    wakeWordDetector.reset()
+                    lastActivityMs = System.currentTimeMillis()
+                    vadMs          = 0L
+                    isListening    = true
                     broadcastState(EliseState.LISTENING)
                     updateNotification(EliseState.LISTENING)
                 }
@@ -140,26 +172,49 @@ class EliseForegroundService : Service() {
         }
     }
 
-    private suspend fun processWithElise(wav: ByteArray) {
+    // ── Vibration pulsée PROCESSING uniquement ─────────────────────────────────
+
+    private var vibJob: Job? = null
+
+    private fun startProcessingVibration() {
+        vibJob?.cancel()
+        vibJob = scope.launch {
+            while (isActive) {
+                vibrateOnce(Config.VIB_PROCESSING_PULSE)
+                delay(Config.VIB_PROCESSING_INTERVAL)
+            }
+        }
+    }
+
+    private fun stopProcessingVibration() { vibJob?.cancel(); vibJob = null }
+
+    // ── Traitement ÉLISE ───────────────────────────────────────────────────────
+
+    private suspend fun processWithElise(pcm: ByteArray) {
+        val wav   = audioCapture.pcmToWav(pcm)
         val prefs = getSharedPreferences(Config.PREF_FILE, Context.MODE_PRIVATE)
         val token = prefs.getString(Config.KEY_TOKEN, null)
-            ?: run {
-                Log.e(TAG, "Pas de token — configure l'app d'abord")
-                broadcastState(EliseState.NOT_CONFIGURED)
-                return
-            }
-
+            ?: run { broadcastState(EliseState.NOT_CONFIGURED); return }
         val serverUrl = prefs.getString(Config.KEY_SERVER_URL, Config.WS_URL) ?: Config.WS_URL
         val ws = EliseWebSocket(serverUrl, token)
-
         try {
             val response = ws.sendVoice(wav)
+
+            val normalised = response.transcript.trim().lowercase().trimEnd('.', '!', '?', ' ')
+            if (normalised in Config.STOP_WORDS) {
+                Log.i(TAG, "Off word: '$normalised'")
+                return
+            }
 
             if (response.mp3Bytes.isNotEmpty()) {
                 broadcastState(EliseState.SPEAKING, response.transcript)
                 updateNotification(EliseState.SPEAKING)
-                audioPlayer.playMp3(response.mp3Bytes)
-                Log.i(TAG, "Réponse jouée (${response.responseMs}ms, transcript='${response.transcript}')")
+                isSpeaking.set(true)
+                try {
+                    audioPlayer.playMp3(response.mp3Bytes)
+                } finally {
+                    isSpeaking.set(false)
+                }
             }
         } finally {
             ws.shutdown()
@@ -169,33 +224,24 @@ class EliseForegroundService : Service() {
     // ── Notifications ──────────────────────────────────────────────────────────
 
     private fun createNotificationChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                NOTIF_CHANNEL_ID,
-                "ÉLISE — Écoute active",
-                NotificationManager.IMPORTANCE_LOW
-            ).apply {
-                description = "ÉLISE écoute la phrase de déclenchement"
-                setShowBadge(false)
-            }
-            getSystemService(NotificationManager::class.java)
-                .createNotificationChannel(channel)
-        }
+        val channel = NotificationChannel(
+            NOTIF_CHANNEL_ID, "ÉLISE", NotificationManager.IMPORTANCE_LOW
+        ).apply { setShowBadge(false) }
+        getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
     }
 
-    private fun buildNotification(state: EliseState, detail: String = ""): Notification {
-        val icon = com.lnsgroup.elise.watch.R.drawable.ic_elise
+    private fun buildNotification(state: EliseState): Notification {
         val text = when (state) {
-            EliseState.LISTENING -> "En écoute — dites « Ok Élise »"
-            EliseState.RECORDING -> "Je t'écoute..."
+            EliseState.WAITING    -> "Veille — double tap pour activer"
+            EliseState.LISTENING  -> "Écoute active — parle pour déclencher"
+            EliseState.RECORDING  -> "Enregistrement..."
             EliseState.PROCESSING -> "Traitement..."
-            EliseState.SPEAKING -> "Réponse en cours"
-            EliseState.ERROR -> "Erreur — réessaie"
-            EliseState.NOT_CONFIGURED -> "Configure le token dans l'app"
-            EliseState.IDLE -> "En veille"
+            EliseState.SPEAKING   -> "Réponse en cours"
+            EliseState.ERROR      -> "Erreur"
+            else                  -> "ÉLISE"
         }
         return NotificationCompat.Builder(this, NOTIF_CHANNEL_ID)
-            .setSmallIcon(icon)
+            .setSmallIcon(com.lnsgroup.elise.watch.R.drawable.ic_elise)
             .setContentTitle("ÉLISE")
             .setContentText(text)
             .setOngoing(true)
@@ -204,29 +250,22 @@ class EliseForegroundService : Service() {
     }
 
     private fun updateNotification(state: EliseState) {
-        val nm = getSystemService(NotificationManager::class.java)
-        nm.notify(NOTIF_ID, buildNotification(state))
+        getSystemService(NotificationManager::class.java).notify(NOTIF_ID, buildNotification(state))
     }
 
-    // ── Utils ──────────────────────────────────────────────────────────────────
-
-    private fun vibrate(ms: Long) {
-        val vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+    private fun vibrateOnce(ms: Long) {
+        val vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
             getSystemService(VibratorManager::class.java)?.defaultVibrator
-        } else {
-            @Suppress("DEPRECATION")
-            getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        else @Suppress("DEPRECATION") getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
             vibrator?.vibrate(VibrationEffect.createOneShot(ms, VibrationEffect.DEFAULT_AMPLITUDE))
-        } else {
-            @Suppress("DEPRECATION")
-            vibrator?.vibrate(ms)
-        }
+        else @Suppress("DEPRECATION") vibrator?.vibrate(ms)
     }
 
     private fun broadcastState(state: EliseState, detail: String = "") {
+        currentState = state
         sendBroadcast(Intent(ACTION_STATE_CHANGED).apply {
+            setPackage(packageName)
             putExtra(EXTRA_STATE, state.name)
             if (detail.isNotEmpty()) putExtra("detail", detail)
         })
