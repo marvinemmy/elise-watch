@@ -196,28 +196,40 @@ class EliseForegroundService : Service() {
         val token = prefs.getString(Config.KEY_TOKEN, null)
             ?: run { broadcastState(EliseState.NOT_CONFIGURED); return }
         val serverUrl = prefs.getString(Config.KEY_SERVER_URL, Config.WS_URL) ?: Config.WS_URL
-        val ws = EliseWebSocket(serverUrl, token)
-        try {
-            val response = ws.sendVoice(wav)
 
-            val normalised = response.transcript.trim().lowercase().trimEnd('.', '!', '?', ' ')
-            if (normalised in Config.STOP_WORDS) {
-                Log.i(TAG, "Off word: '$normalised'")
-                return
+        val response = try {
+            if (com.lnsgroup.elise.watch.network.EliseConnectionHelper.hasDirectInternet()) {
+                // Chemin direct — WebSocket vers lnsgroup.dev
+                val ws = EliseWebSocket(serverUrl, token)
+                try { ws.sendVoice(wav) } finally { ws.shutdown() }
+            } else {
+                // Fallback Bluetooth — proxy via téléphone
+                Log.i(TAG, "No direct internet, routing via phone proxy")
+                broadcastState(EliseState.PROCESSING)
+                com.lnsgroup.elise.watch.network.EliseConnectionHelper.sendViaPhoneProxy(
+                    this, wav, token
+                )
             }
+        } catch (e: Exception) {
+            Log.e(TAG, "processWithElise error: ${e.message}")
+            throw e  // remonté au caller qui gère ERROR + delay
+        }
 
-            if (response.mp3Bytes.isNotEmpty()) {
-                broadcastState(EliseState.SPEAKING, response.transcript)
-                updateNotification(EliseState.SPEAKING)
-                isSpeaking.set(true)
-                try {
-                    audioPlayer.playMp3(response.mp3Bytes)
-                } finally {
-                    isSpeaking.set(false)
-                }
+        val normalised = response.transcript.trim().lowercase().trimEnd('.', '!', '?', ' ')
+        if (normalised in Config.STOP_WORDS) {
+            Log.i(TAG, "Off word: '$normalised'")
+            return
+        }
+
+        if (response.mp3Bytes.isNotEmpty()) {
+            broadcastState(EliseState.SPEAKING, response.transcript)
+            updateNotification(EliseState.SPEAKING)
+            isSpeaking.set(true)
+            try {
+                audioPlayer.playMp3(response.mp3Bytes)
+            } finally {
+                isSpeaking.set(false)
             }
-        } finally {
-            ws.shutdown()
         }
     }
 

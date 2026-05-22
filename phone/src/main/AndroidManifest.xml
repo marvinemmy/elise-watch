@@ -93,6 +93,15 @@
             android:name=".EliseCallMonitor"
             android:exported="false" />
 
+        <!-- Proxy Wearable : relaie l'audio de la montre au serveur via Bluetooth -->
+        <service
+            android:name=".EliseWatchProxyService"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.google.android.gms.wearable.CHANNEL_EVENT" />
+            </intent-filter>
+        </service>
+
         <!-- Démarrage automatique au boot -->
         <receiver
             android:name=".EliseBootReceiver"

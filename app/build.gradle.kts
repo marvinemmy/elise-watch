@@ -55,4 +55,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.lifecycle:lifecycle-service:2.7.0")
+
+    // Wearable Data Layer — proxy Bluetooth phone↔watch
+    implementation("com.google.android.gms:play-services-wearable:18.1.0")
 }

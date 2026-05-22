@@ -82,4 +82,7 @@ dependencies {
     // Lifecycle
     implementation("androidx.lifecycle:lifecycle-service:2.7.0")
     implementation("androidx.lifecycle:lifecycle-process:2.7.0")
+
+    // Wearable Data Layer — proxy Bluetooth watch→phone→serveur
+    implementation("com.google.android.gms:play-services-wearable:18.1.0")
 }
