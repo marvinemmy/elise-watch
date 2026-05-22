@@ -43,6 +43,9 @@ object Config {
 
     // Off word — arrêt vocal (normalisé lowercase, sans ponctuation)
     val STOP_WORDS = setOf(
+        // Mot d'interruption principal — phrase dédiée, sans ambiguïté
+        "élise off", "elise off",
+        // Mots courts de secours
         "stop", "arrête", "arrêtes", "arrêter", "annule", "annuler",
         "silence", "tais-toi", "tais toi", "ça suffit", "ca suffit"
     )
