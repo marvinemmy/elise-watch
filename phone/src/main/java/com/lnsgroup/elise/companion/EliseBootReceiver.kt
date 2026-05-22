@@ -8,6 +8,7 @@ import android.provider.Settings
 class EliseBootReceiver : BroadcastReceiver() {
     override fun onReceive(ctx: Context, intent: Intent) {
         if (intent.action == Intent.ACTION_BOOT_COMPLETED) {
+            RoutineScheduler.scheduleAll(ctx)
             if (Settings.canDrawOverlays(ctx)) {
                 EliseOverlayService.start(ctx)
                 EliseCallMonitor.start(ctx)

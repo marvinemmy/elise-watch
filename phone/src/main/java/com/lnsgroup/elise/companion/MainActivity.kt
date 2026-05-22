@@ -39,6 +39,9 @@ class MainActivity : AppCompatActivity() {
             binding.bottomNav.selectedItemId = R.id.nav_voice
         }
 
+        // Planifier les routines quotidiennes
+        RoutineScheduler.scheduleAll(this)
+
         // Permissions
         permManager = ElisePermissionManager(this)
         permManager.register()

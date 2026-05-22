@@ -1,10 +1,12 @@
 package com.lnsgroup.elise.companion
 
+import android.app.AlertDialog
 import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.EditText
 import androidx.fragment.app.Fragment
 import com.lnsgroup.elise.companion.databinding.FragmentSettingsBinding
 import kotlinx.coroutines.*
@@ -47,6 +49,7 @@ class SettingsFragment : Fragment() {
             requireActivity().finish()
         }
 
+        setupVariables()
         loadServerStatus()
         checkOtaStatus()
     }
@@ -72,6 +75,56 @@ class SettingsFragment : Fragment() {
                 binding.tvVersionServer.text = "Hors ligne"
             }
         }
+    }
+
+    private fun setupVariables() {
+        val ctx = requireContext()
+
+        // Pre-populate defaults if empty (first launch)
+        if (WorkSchedule.getHomeAddress(ctx).isBlank())
+            WorkSchedule.setHomeAddress(ctx, "Rowlands Road, Worthing, BN11 3JN")
+        if (WorkSchedule.getWorkAddress(ctx).isBlank())
+            WorkSchedule.setWorkAddress(ctx, "32 New Ln, Havant, PO9 2NG")
+
+        binding.tvHomeAddr.text = WorkSchedule.getHomeAddress(ctx).ifBlank { "Non configuré" }
+        binding.tvWorkAddr.text = WorkSchedule.getWorkAddress(ctx).ifBlank { "Non configuré" }
+        binding.switchVacation.isChecked = WorkSchedule.isVacation(ctx)
+
+        binding.btnEditHome.setOnClickListener {
+            showEditDialog("Adresse domicile (pour calcul trajet)", WorkSchedule.getHomeAddress(ctx)) { v ->
+                WorkSchedule.setHomeAddress(ctx, v)
+                binding.tvHomeAddr.text = v
+            }
+        }
+        binding.btnEditWork.setOnClickListener {
+            showEditDialog("Adresse de travail", WorkSchedule.getWorkAddress(ctx)) { v ->
+                WorkSchedule.setWorkAddress(ctx, v)
+                binding.tvWorkAddr.text = v
+            }
+        }
+        binding.switchVacation.setOnCheckedChangeListener { _, checked ->
+            WorkSchedule.setVacation(ctx, checked)
+        }
+        binding.btnReschedule.setOnClickListener {
+            RoutineScheduler.scheduleAll(ctx)
+            binding.tvOtaStatus.text = "Routines reprogrammees"
+        }
+        binding.btnTestMorning.setOnClickListener {
+            binding.tvOtaStatus.text = "Test routine matin en cours..."
+            RoutineExecutor.execute(ctx, RoutineScheduler.ROUTINE_MORNING)
+        }
+    }
+
+    private fun showEditDialog(label: String, current: String, onSave: (String) -> Unit) {
+        val et = EditText(requireContext()).apply {
+            setText(current); textSize = 13f; setPadding(32, 24, 32, 24)
+        }
+        AlertDialog.Builder(requireContext(), R.style.DialogDark)
+            .setTitle(label)
+            .setView(et)
+            .setPositiveButton("Sauvegarder") { _, _ -> onSave(et.text.toString().trim()) }
+            .setNegativeButton("Annuler", null)
+            .show()
     }
 
     private fun checkOtaStatus() {
