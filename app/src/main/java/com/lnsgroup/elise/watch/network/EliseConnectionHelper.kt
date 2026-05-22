@@ -29,7 +29,7 @@ object EliseConnectionHelper {
      */
     suspend fun hasDirectInternet(): Boolean = withContext(Dispatchers.IO) {
         try {
-            val req = Request.Builder().url(HEALTH_URL).head().build()
+            val req = Request.Builder().url(HEALTH_URL).get().build()
             healthClient.newCall(req).execute().use { it.isSuccessful }
         } catch (e: Exception) {
             Log.d(TAG, "No direct internet: ${e.message}")
