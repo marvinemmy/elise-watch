@@ -5,4 +5,12 @@
         <item name="android:statusBarColor">#010A10</item>
         <item name="android:navigationBarColor">#010A10</item>
     </style>
+
+    <style name="DialogDark" parent="Theme.AppCompat.Dialog">
+        <item name="android:windowBackground">#0D1222</item>
+        <item name="android:textColorPrimary">#CCE8FF</item>
+        <item name="android:textColorSecondary">#335566</item>
+        <item name="colorAccent">#00E5FF</item>
+        <item name="android:editTextColor">#CCE8FF</item>
+    </style>
 </resources>
