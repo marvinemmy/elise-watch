@@ -269,10 +269,21 @@ class EliseForegroundService : Service() {
                 var warmupMs = 0L
                 try {
                     while (isActive) {
-                        val (_, rms) = audioCapture.readChunk()
+                        val (samples, rms) = audioCapture.readChunk()
                         warmupMs += 100
                         if (warmupMs < 500L) continue
 
+                        // Wake word pendant lecture → interruption immédiate
+                        if (samples.isNotEmpty() && wakeWordDetector.process(samples)) {
+                            Log.i(TAG, "Wake word pendant lecture — interruption")
+                            wakeWordDetector.reset()
+                            interrupted.set(true)
+                            audioPlayer.stop()
+                            vibrateOnce(60)
+                            break
+                        }
+
+                        // VAD amplitude → interruption si voix forte détectée
                         if (rms >= Config.VAD_INTERRUPT_RMS) {
                             vadMs += 100
                             if (vadMs >= Config.VAD_INTERRUPT_MS) {
