@@ -38,7 +38,7 @@ class EliseWebSocket(private val serverUrl: String, private val token: String) {
      *   ← JSON {"type":"response_end"}
      */
     suspend fun sendVoice(wavBytes: ByteArray): EliseResponse = withContext(Dispatchers.IO) {
-        val url = "$serverUrl?token=${token}"
+        val url = "$serverUrl?token=${token}&v=${com.lnsgroup.elise.watch.BuildConfig.VERSION_CODE}"
         val request = Request.Builder().url(url).build()
 
         suspendCancellableCoroutine { cont ->
