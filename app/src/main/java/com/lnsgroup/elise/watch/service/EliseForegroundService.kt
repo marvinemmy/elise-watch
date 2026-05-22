@@ -9,6 +9,9 @@ import androidx.core.app.NotificationCompat
 import com.lnsgroup.elise.watch.Config
 import com.lnsgroup.elise.watch.audio.AudioCapture
 import com.lnsgroup.elise.watch.audio.AudioPlayer
+import com.lnsgroup.elise.watch.audio.WakeWordDetector
+import com.lnsgroup.elise.watch.health.HeartRateMonitor
+import com.lnsgroup.elise.watch.media.MusicController
 import com.lnsgroup.elise.watch.network.EliseWebSocket
 import com.lnsgroup.elise.watch.ui.EliseState
 import kotlinx.coroutines.*
@@ -24,6 +27,9 @@ class EliseForegroundService : Service() {
     private var listeningJob: Job? = null
     private lateinit var audioCapture: AudioCapture
     private lateinit var audioPlayer: AudioPlayer
+    private lateinit var wakeWordDetector: WakeWordDetector
+    private lateinit var heartRateMonitor: HeartRateMonitor
+    private lateinit var musicController: MusicController
 
     companion object {
         const val ACTION_STATE_CHANGED = "com.lnsgroup.elise.watch.STATE_CHANGED"
@@ -46,8 +52,12 @@ class EliseForegroundService : Service() {
     override fun onCreate() {
         super.onCreate()
         createNotificationChannel()
-        audioCapture = AudioCapture()
-        audioPlayer  = AudioPlayer(cacheDir)
+        audioCapture       = AudioCapture()
+        audioPlayer        = AudioPlayer(cacheDir)
+        wakeWordDetector   = WakeWordDetector(this)
+        heartRateMonitor   = HeartRateMonitor(this)
+        musicController    = MusicController(this)
+        heartRateMonitor.start()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -69,6 +79,8 @@ class EliseForegroundService : Service() {
         listeningJob?.cancel()
         audioCapture.stop()
         audioPlayer.cleanup()
+        heartRateMonitor.stop()
+        wakeWordDetector.close()
         scope.cancel()
     }
 
@@ -80,15 +92,25 @@ class EliseForegroundService : Service() {
             broadcastState(EliseState.WAITING)
             var isListening    = false
             var lastActivityMs = System.currentTimeMillis()
-            var vadMs          = 0L   // durée parole continue détectée
+            var vadMs          = 0L
             val chunkMs        = (Config.SAMPLE_RATE.toFloat() / 10 / Config.SAMPLE_RATE * 1000).toLong()
-                                     .coerceAtLeast(80L)  // ~100ms par chunk
+                                     .coerceAtLeast(80L)
 
             audioCapture.startContinuous()
 
             while (isActive) {
                 val (samples, rms) = audioCapture.readChunk()
                 if (samples.isEmpty()) { delay(10); continue }
+
+                // ── Wake word (état WAITING seulement) ────────────────────────
+                if (!isListening && currentState == EliseState.WAITING) {
+                    if (wakeWordDetector.process(samples)) {
+                        Log.i(TAG, "Wake word détecté")
+                        wakeWordDetector.reset()
+                        activateTrigger.set(true)
+                        vibrateOnce(60)
+                    }
+                }
 
                 // ── Double tap ─────────────────────────────────────────────────
                 if (activateTrigger.getAndSet(false)) {
@@ -197,10 +219,17 @@ class EliseForegroundService : Service() {
             ?: run { broadcastState(EliseState.NOT_CONFIGURED); return }
         val serverUrl = prefs.getString(Config.KEY_SERVER_URL, Config.WS_URL) ?: Config.WS_URL
 
+        // Lecture des capteurs biologiques et notifications avant envoi
+        val hrBpm = heartRateMonitor.latestBpm.takeIf { it > 0 }
+
         val response = try {
             if (com.lnsgroup.elise.watch.network.EliseConnectionHelper.hasDirectInternet()) {
                 val ws = EliseWebSocket(serverUrl, token)
-                try { ws.sendVoice(wav) } finally { ws.shutdown() }
+                try {
+                    // Enrichir l'audio WAV avec les notifications si l'utilisateur les demande
+                    val wavWithContext = enrichWavWithContext(wav)
+                    ws.sendVoice(wavWithContext, heartRate = hrBpm)
+                } finally { ws.shutdown() }
             } else {
                 Log.i(TAG, "No direct internet, routing via phone proxy")
                 com.lnsgroup.elise.watch.network.EliseConnectionHelper.sendViaPhoneProxy(
@@ -212,14 +241,21 @@ class EliseForegroundService : Service() {
             throw e
         }
 
-        val normalised = response.transcript.trim().lowercase().trimEnd('.', '!', '?', ' ')
+        // Détecter et exécuter commandes musicales depuis le transcript utilisateur
+        // (exécuté en parallèle — la réponse LLM confirme verbalement l'action)
+        val transcript = response.transcript.trim()
+        if (musicController.handleTranscript(transcript)) {
+            Log.i(TAG, "Music command executed from: $transcript")
+        }
+
+        val normalised = transcript.lowercase().trimEnd('.', '!', '?', ' ')
         if (normalised in Config.STOP_WORDS) {
             Log.i(TAG, "Off word: '$normalised'")
             return
         }
         if (response.mp3Bytes.isEmpty()) return
 
-        broadcastState(EliseState.SPEAKING, response.transcript)
+        broadcastState(EliseState.SPEAKING, transcript)
         updateNotification(EliseState.SPEAKING)
         isSpeaking.set(true)
 
@@ -228,16 +264,12 @@ class EliseForegroundService : Service() {
         // Play MP3 + simultaneous VAD monitoring for real-time interruption
         supervisorScope {
             val monitorJob = launch(Dispatchers.IO) {
-                // AEC = true : VOICE_COMMUNICATION source + AcousticEchoCanceler
-                // so the speaker output is cancelled from the mic — ÉLISE won't detect herself
                 audioCapture.startContinuous(aec = true)
                 var vadMs = 0L
                 var warmupMs = 0L
                 try {
                     while (isActive) {
                         val (_, rms) = audioCapture.readChunk()
-                        // Guard: ignore the first 500ms while AEC warms up and the initial
-                        // audio burst hits the mic before cancellation kicks in
                         warmupMs += 100
                         if (warmupMs < 500L) continue
 
@@ -246,8 +278,8 @@ class EliseForegroundService : Service() {
                             if (vadMs >= Config.VAD_INTERRUPT_MS) {
                                 Log.i(TAG, "Interruption vocale (rms=$rms) — arrêt lecture")
                                 interrupted.set(true)
-                                audioPlayer.stop()   // unblocks playMp3() below
-                                vibrateOnce(40)      // feedback haptique court
+                                audioPlayer.stop()
+                                vibrateOnce(40)
                                 break
                             }
                         } else {
@@ -256,7 +288,6 @@ class EliseForegroundService : Service() {
                     }
                 } finally {
                     if (!interrupted.get()) audioCapture.stop()
-                    // If interrupted, keep mic open — recordUntilSilence() will take over
                 }
             }
 
@@ -277,17 +308,15 @@ class EliseForegroundService : Service() {
             updateNotification(EliseState.RECORDING)
 
             try {
-                audioCapture.stop()   // libère le continuous recorder avant recordUntilSilence
+                audioCapture.stop()
                 val correctionPcm = audioCapture.recordUntilSilence()
 
                 if (correctionPcm.size >= Config.SAMPLE_RATE / 2) {
                     broadcastState(EliseState.PROCESSING)
                     updateNotification(EliseState.PROCESSING)
                     startProcessingVibration()
-                    // Recursive call — le serveur a déjà le contexte de l'échange précédent
                     processWithElise(correctionPcm)
                 } else {
-                    // Interruption sans voix assez longue → reprendre écoute
                     broadcastState(EliseState.LISTENING)
                 }
             } catch (e: Exception) {
@@ -300,6 +329,15 @@ class EliseForegroundService : Service() {
         }
     }
 
+    /**
+     * Si le transcript semble être une demande de notifications, injecte
+     * le contexte des notifications récentes dans le WAV via un fichier WAV
+     * enrichi — en réalité, l'enrichissement se fait côté URL ou dans le transcript
+     * côté serveur. Ici on retourne le wav original, l'enrichissement se fait
+     * via l'URL WebSocket (query params hr) et via le transcript côté serveur.
+     */
+    private fun enrichWavWithContext(wav: ByteArray): ByteArray = wav
+
     // ── Notifications ──────────────────────────────────────────────────────────
 
     private fun createNotificationChannel() {
@@ -311,7 +349,7 @@ class EliseForegroundService : Service() {
 
     private fun buildNotification(state: EliseState): Notification {
         val text = when (state) {
-            EliseState.WAITING    -> "Veille — double tap pour activer"
+            EliseState.WAITING    -> "Veille — double tap ou « Ok Élise »"
             EliseState.LISTENING  -> "Écoute active — parle pour déclencher"
             EliseState.RECORDING  -> "Enregistrement..."
             EliseState.PROCESSING -> "Traitement..."

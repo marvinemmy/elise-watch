@@ -44,8 +44,10 @@ class EliseWebSocket(private val serverUrl: String, private val token: String) {
     suspend fun sendVoice(
         wavBytes: ByteArray,
         onChunk: ((ByteArray) -> Unit)? = null,
+        heartRate: Int? = null,
     ): EliseResponse = withContext(Dispatchers.IO) {
-        val url = "$serverUrl?token=${token}&v=${com.lnsgroup.elise.watch.BuildConfig.VERSION_CODE}"
+        val hrParam = if (heartRate != null && heartRate > 0) "&hr=$heartRate" else ""
+        val url = "$serverUrl?token=${token}&v=${com.lnsgroup.elise.watch.BuildConfig.VERSION_CODE}$hrParam"
         val request = Request.Builder().url(url).build()
 
         suspendCancellableCoroutine { cont ->
