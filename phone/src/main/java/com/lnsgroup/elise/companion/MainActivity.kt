@@ -43,6 +43,8 @@ class MainActivity : AppCompatActivity() {
 
         binding.root.setOnClickListener { onMicTap() }
 
+        binding.btnStop.setOnClickListener { stopEverything() }
+
         // Gestionnaire de permissions centralisé
         permManager = ElisePermissionManager(this)
         permManager.register()
@@ -165,6 +167,14 @@ class MainActivity : AppCompatActivity() {
 
     private fun stopRecording() {
         isRecording = false
+    }
+
+    private fun stopEverything() {
+        isRecording = false
+        scope.cancel()
+        EliseOverlayService.stop(this)
+        EliseCallMonitor.stop(this)
+        finish()
     }
 
     private fun playMp3(mp3: ByteArray) {

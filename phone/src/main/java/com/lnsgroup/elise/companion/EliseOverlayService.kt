@@ -68,6 +68,12 @@ class EliseOverlayService : Service() {
         enableDrag(params)
         wm.addView(overlayView, params)
 
+        // Long press sur l'orbe → ferme l'overlay
+        overlayView.setOnLongClickListener {
+            stop(this)
+            true
+        }
+
         // Carte texte pour les messages en mode appel
         setupTextCard()
     }
