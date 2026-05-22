@@ -228,11 +228,19 @@ class EliseForegroundService : Service() {
         // Play MP3 + simultaneous VAD monitoring for real-time interruption
         supervisorScope {
             val monitorJob = launch(Dispatchers.IO) {
-                audioCapture.startContinuous()
+                // AEC = true : VOICE_COMMUNICATION source + AcousticEchoCanceler
+                // so the speaker output is cancelled from the mic — ÉLISE won't detect herself
+                audioCapture.startContinuous(aec = true)
                 var vadMs = 0L
+                var warmupMs = 0L
                 try {
                     while (isActive) {
                         val (_, rms) = audioCapture.readChunk()
+                        // Guard: ignore the first 500ms while AEC warms up and the initial
+                        // audio burst hits the mic before cancellation kicks in
+                        warmupMs += 100
+                        if (warmupMs < 500L) continue
+
                         if (rms >= Config.VAD_INTERRUPT_RMS) {
                             vadMs += 100
                             if (vadMs >= Config.VAD_INTERRUPT_MS) {
@@ -248,7 +256,7 @@ class EliseForegroundService : Service() {
                     }
                 } finally {
                     if (!interrupted.get()) audioCapture.stop()
-                    // If interrupted, keep mic open for recordUntilSilence()
+                    // If interrupted, keep mic open — recordUntilSilence() will take over
                 }
             }
 

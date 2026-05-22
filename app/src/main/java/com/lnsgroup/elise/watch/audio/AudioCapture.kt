@@ -3,6 +3,8 @@ package com.lnsgroup.elise.watch.audio
 import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaRecorder
+import android.media.audiofx.AcousticEchoCanceler
+import android.media.audiofx.NoiseSuppressor
 import android.util.Log
 import com.lnsgroup.elise.watch.Config
 import kotlinx.coroutines.Dispatchers
@@ -29,14 +31,34 @@ class AudioCapture {
     private var recorder: AudioRecord? = null
     private val shortBuffer = ShortArray(bufferSize / 2)
 
-    fun startContinuous(): AudioRecord {
+    /**
+     * Starts continuous monitoring.
+     * @param aec If true, uses VOICE_COMMUNICATION source (hardware AEC) + AcousticEchoCanceler
+     *            so that the speaker output is subtracted from the mic — used during SPEAKING
+     *            to avoid ÉLISE detecting her own voice as an interruption.
+     */
+    fun startContinuous(aec: Boolean = false): AudioRecord {
+        val source = if (aec) MediaRecorder.AudioSource.VOICE_COMMUNICATION
+                     else MediaRecorder.AudioSource.MIC
         val rec = AudioRecord(
-            MediaRecorder.AudioSource.MIC,
+            source,
             Config.SAMPLE_RATE,
             Config.CHANNEL_CONFIG,
             Config.AUDIO_FORMAT,
             bufferSize * 4
         )
+        if (aec) {
+            // AEC: cancels speaker echo from mic signal (hardware-backed when available)
+            if (AcousticEchoCanceler.isAvailable()) {
+                try { AcousticEchoCanceler.create(rec.audioSessionId)?.enabled = true }
+                catch (_: Exception) {}
+            }
+            // NS: suppresses background noise for cleaner VAD
+            if (NoiseSuppressor.isAvailable()) {
+                try { NoiseSuppressor.create(rec.audioSessionId)?.enabled = true }
+                catch (_: Exception) {}
+            }
+        }
         rec.startRecording()
         recorder = rec
         return rec
