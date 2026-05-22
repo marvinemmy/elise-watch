@@ -1,0 +1,26 @@
+[
+    {
+        "merged": "com.lnsgroup.elise.watch.app-merged_res-33:/layout_activity_main.xml.flat",
+        "source": "com.lnsgroup.elise.watch.app-main-34:/layout/activity_main.xml"
+    },
+    {
+        "merged": "com.lnsgroup.elise.watch.app-merged_res-33:/xml_file_provider_paths.xml.flat",
+        "source": "com.lnsgroup.elise.watch.app-main-34:/xml/file_provider_paths.xml"
+    },
+    {
+        "merged": "com.lnsgroup.elise.watch.app-merged_res-33:/drawable_orb_listening.xml.flat",
+        "source": "com.lnsgroup.elise.watch.app-main-34:/drawable/orb_listening.xml"
+    },
+    {
+        "merged": "com.lnsgroup.elise.watch.app-merged_res-33:/drawable_orb_idle.xml.flat",
+        "source": "com.lnsgroup.elise.watch.app-main-34:/drawable/orb_idle.xml"
+    },
+    {
+        "merged": "com.lnsgroup.elise.watch.app-merged_res-33:/drawable_orb_speaking.xml.flat",
+        "source": "com.lnsgroup.elise.watch.app-main-34:/drawable/orb_speaking.xml"
+    },
+    {
+        "merged": "com.lnsgroup.elise.watch.app-merged_res-33:/drawable_ic_elise.xml.flat",
+        "source": "com.lnsgroup.elise.watch.app-main-34:/drawable/ic_elise.xml"
+    }
+]

@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#050510">
+
+    <!-- Header -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="24dp"
+        android:paddingEnd="24dp"
+        android:paddingTop="56dp"
+        android:paddingBottom="16dp">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="ROUTINES"
+            android:textColor="#00E5FF"
+            android:textSize="13sp"
+            android:fontFamily="sans-serif-thin"
+            android:letterSpacing="0.30" />
+
+        <TextView
+            android:id="@+id/btnAnalyze"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="⟳ Analyser"
+            android:textColor="#00E5FF"
+            android:textSize="12sp"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:paddingTop="6dp"
+            android:paddingBottom="6dp"
+            android:background="@drawable/card_glass"
+            android:clickable="true"
+            android:focusable="true" />
+    </LinearLayout>
+
+    <!-- Subtitle -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Habitudes détectées automatiquement"
+        android:textColor="#335566"
+        android:textSize="11sp"
+        android:paddingStart="24dp"
+        android:paddingBottom="12dp" />
+
+    <!-- Loading / empty state -->
+    <TextView
+        android:id="@+id/tvRoutinesEmpty"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Chargement…"
+        android:textColor="#335566"
+        android:textSize="13sp"
+        android:gravity="center"
+        android:paddingTop="40dp"
+        android:visibility="visible" />
+
+    <!-- Routine list -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvRoutines"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:clipToPadding="false" />
+
+</LinearLayout>

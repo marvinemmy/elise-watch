@@ -1,0 +1,253 @@
+1<?xml version="1.0" encoding="utf-8"?>
+2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+3    package="com.lnsgroup.elise.watch"
+4    android:versionCode="1"
+5    android:versionName="1.0.1" >
+6
+7    <uses-sdk
+8        android:minSdkVersion="30"
+9        android:targetSdkVersion="34" />
+10
+11    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+11-->C:\Users\User\Desktop\Elise\elise-watch\app\src\main\AndroidManifest.xml:4:5-71
+11-->C:\Users\User\Desktop\Elise\elise-watch\app\src\main\AndroidManifest.xml:4:22-68
+12    <uses-permission android:name="android.permission.INTERNET" />
+12-->C:\Users\User\Desktop\Elise\elise-watch\app\src\main\AndroidManifest.xml:5:5-67
+12-->C:\Users\User\Desktop\Elise\elise-watch\app\src\main\AndroidManifest.xml:5:22-64
+13    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+13-->C:\Users\User\Desktop\Elise\elise-watch\app\src\main\AndroidManifest.xml:6:5-77
+13-->C:\Users\User\Desktop\Elise\elise-watch\app\src\main\AndroidManifest.xml:6:22-74
+14    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
+14-->C:\Users\User\Desktop\Elise\elise-watch\app\src\main\AndroidManifest.xml:7:5-88
+14-->C:\Users\User\Desktop\Elise\elise-watch\app\src\main\AndroidManifest.xml:7:22-85
+15    <uses-permission android:name="android.permission.WAKE_LOCK" />
+15-->C:\Users\User\Desktop\Elise\elise-watch\app\src\main\AndroidManifest.xml:8:5-68
+15-->C:\Users\User\Desktop\Elise\elise-watch\app\src\main\AndroidManifest.xml:8:22-65
+16    <uses-permission android:name="android.permission.VIBRATE" />
+16-->C:\Users\User\Desktop\Elise\elise-watch\app\src\main\AndroidManifest.xml:9:5-66
+16-->C:\Users\User\Desktop\Elise\elise-watch\app\src\main\AndroidManifest.xml:9:22-63
+17    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+17-->C:\Users\User\Desktop\Elise\elise-watch\app\src\main\AndroidManifest.xml:10:5-81
+17-->C:\Users\User\Desktop\Elise\elise-watch\app\src\main\AndroidManifest.xml:10:22-78
+18    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+18-->C:\Users\User\Desktop\Elise\elise-watch\app\src\main\AndroidManifest.xml:11:5-83
+18-->C:\Users\User\Desktop\Elise\elise-watch\app\src\main\AndroidManifest.xml:11:22-80
+19
+20    <uses-feature android:name="android.hardware.type.watch" />
+20-->C:\Users\User\Desktop\Elise\elise-watch\app\src\main\AndroidManifest.xml:13:5-64
+20-->C:\Users\User\Desktop\Elise\elise-watch\app\src\main\AndroidManifest.xml:13:19-61
+21    <uses-feature
+21-->C:\Users\User\Desktop\Elise\elise-watch\app\src\main\AndroidManifest.xml:14:5-88
+22        android:name="android.hardware.microphone"
+22-->C:\Users\User\Desktop\Elise\elise-watch\app\src\main\AndroidManifest.xml:14:19-61
+23        android:required="true" />
+23-->C:\Users\User\Desktop\Elise\elise-watch\app\src\main\AndroidManifest.xml:14:62-85
+24
+25    <permission
+25-->[androidx.core:core:1.12.0] C:\Users\User\.gradle\caches\transforms-3\01be542a8a7642ecba403b94caa2bdf6\transformed\core-1.12.0\AndroidManifest.xml:22:5-24:47
+26        android:name="com.lnsgroup.elise.watch.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+26-->[androidx.core:core:1.12.0] C:\Users\User\.gradle\caches\transforms-3\01be542a8a7642ecba403b94caa2bdf6\transformed\core-1.12.0\AndroidManifest.xml:23:9-81
+27        android:protectionLevel="signature" />
+27-->[androidx.core:core:1.12.0] C:\Users\User\.gradle\caches\transforms-3\01be542a8a7642ecba403b94caa2bdf6\transformed\core-1.12.0\AndroidManifest.xml:24:9-44
+28
+29    <uses-permission android:name="com.lnsgroup.elise.watch.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
+29-->[androidx.core:core:1.12.0] C:\Users\User\.gradle\caches\transforms-3\01be542a8a7642ecba403b94caa2bdf6\transformed\core-1.12.0\AndroidManifest.xml:26:5-97
+29-->[androidx.core:core:1.12.0] C:\Users\User\.gradle\caches\transforms-3\01be542a8a7642ecba403b94caa2bdf6\transformed\core-1.12.0\AndroidManifest.xml:26:22-94
+30
+31    <application
+31-->C:\Users\User\Desktop\Elise\elise-watch\app\src\main\AndroidManifest.xml:16:5-77:19
+32        android:allowBackup="false"
+32-->C:\Users\User\Desktop\Elise\elise-watch\app\src\main\AndroidManifest.xml:20:9-36
+33        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
+33-->[androidx.core:core:1.12.0] C:\Users\User\.gradle\caches\transforms-3\01be542a8a7642ecba403b94caa2bdf6\transformed\core-1.12.0\AndroidManifest.xml:28:18-86
+34        android:extractNativeLibs="false"
+35        android:icon="@drawable/ic_elise"
+35-->C:\Users\User\Desktop\Elise\elise-watch\app\src\main\AndroidManifest.xml:18:9-42
+36        android:label="ELISE"
+36-->C:\Users\User\Desktop\Elise\elise-watch\app\src\main\AndroidManifest.xml:17:9-30
+37        android:supportsRtl="true"
+37-->C:\Users\User\Desktop\Elise\elise-watch\app\src\main\AndroidManifest.xml:21:9-35
+38        android:theme="@style/Theme.Elise" >
+38-->C:\Users\User\Desktop\Elise\elise-watch\app\src\main\AndroidManifest.xml:19:9-43
+39        <uses-library
+39-->C:\Users\User\Desktop\Elise\elise-watch\app\src\main\AndroidManifest.xml:23:9-92
+40            android:name="com.google.android.wearable"
+40-->C:\Users\User\Desktop\Elise\elise-watch\app\src\main\AndroidManifest.xml:23:23-65
+41            android:required="true" />
+41-->C:\Users\User\Desktop\Elise\elise-watch\app\src\main\AndroidManifest.xml:23:66-89
+42
+43        <meta-data
+43-->C:\Users\User\Desktop\Elise\elise-watch\app\src\main\AndroidManifest.xml:25:9-27:36
+44            android:name="com.google.android.wearable.standalone"
+44-->C:\Users\User\Desktop\Elise\elise-watch\app\src\main\AndroidManifest.xml:26:13-66
+45            android:value="true" />
+45-->C:\Users\User\Desktop\Elise\elise-watch\app\src\main\AndroidManifest.xml:27:13-33
+46
+47        <activity
+47-->C:\Users\User\Desktop\Elise\elise-watch\app\src\main\AndroidManifest.xml:29:9-37:20
+48            android:name="com.lnsgroup.elise.watch.ui.MainActivity"
+48-->C:\Users\User\Desktop\Elise\elise-watch\app\src\main\AndroidManifest.xml:30:13-44
+49            android:exported="true"
+49-->C:\Users\User\Desktop\Elise\elise-watch\app\src\main\AndroidManifest.xml:31:13-36
+50            android:label="ELISE" >
+50-->C:\Users\User\Desktop\Elise\elise-watch\app\src\main\AndroidManifest.xml:32:13-34
+51            <intent-filter>
+51-->C:\Users\User\Desktop\Elise\elise-watch\app\src\main\AndroidManifest.xml:33:13-36:29
+52                <action android:name="android.intent.action.MAIN" />
+52-->C:\Users\User\Desktop\Elise\elise-watch\app\src\main\AndroidManifest.xml:34:17-69
+52-->C:\Users\User\Desktop\Elise\elise-watch\app\src\main\AndroidManifest.xml:34:25-66
+53
+54                <category android:name="android.intent.category.LAUNCHER" />
+54-->C:\Users\User\Desktop\Elise\elise-watch\app\src\main\AndroidManifest.xml:35:17-77
+54-->C:\Users\User\Desktop\Elise\elise-watch\app\src\main\AndroidManifest.xml:35:27-74
+55            </intent-filter>
+56        </activity>
+57
+58        <service
+58-->C:\Users\User\Desktop\Elise\elise-watch\app\src\main\AndroidManifest.xml:39:9-43:44
+59            android:name="com.lnsgroup.elise.watch.service.EliseForegroundService"
+59-->C:\Users\User\Desktop\Elise\elise-watch\app\src\main\AndroidManifest.xml:40:13-59
+60            android:exported="false"
+60-->C:\Users\User\Desktop\Elise\elise-watch\app\src\main\AndroidManifest.xml:41:13-37
+61            android:foregroundServiceType="microphone"
+61-->C:\Users\User\Desktop\Elise\elise-watch\app\src\main\AndroidManifest.xml:42:13-55
+62            android:stopWithTask="false" />
+62-->C:\Users\User\Desktop\Elise\elise-watch\app\src\main\AndroidManifest.xml:43:13-41
+63
+64        <!-- Récepteur OTA : reçoit APK depuis la companion via Bluetooth -->
+65        <service
+65-->C:\Users\User\Desktop\Elise\elise-watch\app\src\main\AndroidManifest.xml:46:9-52:19
+66            android:name="com.lnsgroup.elise.watch.service.EliseOtaService"
+66-->C:\Users\User\Desktop\Elise\elise-watch\app\src\main\AndroidManifest.xml:47:13-52
+67            android:exported="true" >
+67-->C:\Users\User\Desktop\Elise\elise-watch\app\src\main\AndroidManifest.xml:48:13-36
+68            <intent-filter>
+68-->C:\Users\User\Desktop\Elise\elise-watch\app\src\main\AndroidManifest.xml:49:13-51:29
+69                <action android:name="com.google.android.gms.wearable.CHANNEL_EVENT" />
+69-->C:\Users\User\Desktop\Elise\elise-watch\app\src\main\AndroidManifest.xml:50:17-88
+69-->C:\Users\User\Desktop\Elise\elise-watch\app\src\main\AndroidManifest.xml:50:25-85
+70            </intent-filter>
+71        </service>
+72
+73        <!-- Confirme l'installation PackageInstaller après transfert OTA -->
+74        <receiver
+74-->C:\Users\User\Desktop\Elise\elise-watch\app\src\main\AndroidManifest.xml:55:9-57:40
+75            android:name="com.lnsgroup.elise.watch.service.OtaInstallReceiver"
+75-->C:\Users\User\Desktop\Elise\elise-watch\app\src\main\AndroidManifest.xml:56:13-55
+76            android:exported="false" />
+76-->C:\Users\User\Desktop\Elise\elise-watch\app\src\main\AndroidManifest.xml:57:13-37
+77        <receiver
+77-->C:\Users\User\Desktop\Elise\elise-watch\app\src\main\AndroidManifest.xml:59:9-65:20
+78            android:name="com.lnsgroup.elise.watch.service.BootReceiver"
+78-->C:\Users\User\Desktop\Elise\elise-watch\app\src\main\AndroidManifest.xml:60:13-49
+79            android:exported="true" >
+79-->C:\Users\User\Desktop\Elise\elise-watch\app\src\main\AndroidManifest.xml:61:13-36
+80            <intent-filter>
+80-->C:\Users\User\Desktop\Elise\elise-watch\app\src\main\AndroidManifest.xml:62:13-64:29
+81                <action android:name="android.intent.action.BOOT_COMPLETED" />
+81-->C:\Users\User\Desktop\Elise\elise-watch\app\src\main\AndroidManifest.xml:63:17-79
+81-->C:\Users\User\Desktop\Elise\elise-watch\app\src\main\AndroidManifest.xml:63:25-76
+82            </intent-filter>
+83        </receiver>
+84
+85        <provider
+86            android:name="androidx.core.content.FileProvider"
+86-->C:\Users\User\Desktop\Elise\elise-watch\app\src\main\AndroidManifest.xml:68:13-62
+87            android:authorities="com.lnsgroup.elise.watch.fileprovider"
+87-->C:\Users\User\Desktop\Elise\elise-watch\app\src\main\AndroidManifest.xml:69:13-64
+88            android:exported="false"
+88-->C:\Users\User\Desktop\Elise\elise-watch\app\src\main\AndroidManifest.xml:70:13-37
+89            android:grantUriPermissions="true" >
+89-->C:\Users\User\Desktop\Elise\elise-watch\app\src\main\AndroidManifest.xml:71:13-47
+90            <meta-data
+90-->C:\Users\User\Desktop\Elise\elise-watch\app\src\main\AndroidManifest.xml:72:13-74:63
+91                android:name="android.support.FILE_PROVIDER_PATHS"
+91-->C:\Users\User\Desktop\Elise\elise-watch\app\src\main\AndroidManifest.xml:73:17-67
+92                android:resource="@xml/file_provider_paths" />
+92-->C:\Users\User\Desktop\Elise\elise-watch\app\src\main\AndroidManifest.xml:74:17-60
+93        </provider>
+94
+95        <activity
+95-->[com.google.android.gms:play-services-base:18.0.1] C:\Users\User\.gradle\caches\transforms-3\c3ef6fff398798d091dad50dbdb2f9c2\transformed\jetified-play-services-base-18.0.1\AndroidManifest.xml:20:9-22:45
+96            android:name="com.google.android.gms.common.api.GoogleApiActivity"
+96-->[com.google.android.gms:play-services-base:18.0.1] C:\Users\User\.gradle\caches\transforms-3\c3ef6fff398798d091dad50dbdb2f9c2\transformed\jetified-play-services-base-18.0.1\AndroidManifest.xml:20:19-85
+97            android:exported="false"
+97-->[com.google.android.gms:play-services-base:18.0.1] C:\Users\User\.gradle\caches\transforms-3\c3ef6fff398798d091dad50dbdb2f9c2\transformed\jetified-play-services-base-18.0.1\AndroidManifest.xml:22:19-43
+98            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+98-->[com.google.android.gms:play-services-base:18.0.1] C:\Users\User\.gradle\caches\transforms-3\c3ef6fff398798d091dad50dbdb2f9c2\transformed\jetified-play-services-base-18.0.1\AndroidManifest.xml:21:19-78
+99
+100        <meta-data
+100-->[com.google.android.gms:play-services-basement:18.0.0] C:\Users\User\.gradle\caches\transforms-3\04af9867c4e763cf5ef8f764c72f2096\transformed\jetified-play-services-basement-18.0.0\AndroidManifest.xml:21:9-23:69
+101            android:name="com.google.android.gms.version"
+101-->[com.google.android.gms:play-services-basement:18.0.0] C:\Users\User\.gradle\caches\transforms-3\04af9867c4e763cf5ef8f764c72f2096\transformed\jetified-play-services-basement-18.0.0\AndroidManifest.xml:22:13-58
+102            android:value="@integer/google_play_services_version" />
+102-->[com.google.android.gms:play-services-basement:18.0.0] C:\Users\User\.gradle\caches\transforms-3\04af9867c4e763cf5ef8f764c72f2096\transformed\jetified-play-services-basement-18.0.0\AndroidManifest.xml:23:13-66
+103
+104        <provider
+104-->[androidx.emoji2:emoji2:1.2.0] C:\Users\User\.gradle\caches\transforms-3\3b1c9546348c78fb93ea44cdc358ca9a\transformed\jetified-emoji2-1.2.0\AndroidManifest.xml:24:9-32:20
+105            android:name="androidx.startup.InitializationProvider"
+105-->[androidx.emoji2:emoji2:1.2.0] C:\Users\User\.gradle\caches\transforms-3\3b1c9546348c78fb93ea44cdc358ca9a\transformed\jetified-emoji2-1.2.0\AndroidManifest.xml:25:13-67
+106            android:authorities="com.lnsgroup.elise.watch.androidx-startup"
+106-->[androidx.emoji2:emoji2:1.2.0] C:\Users\User\.gradle\caches\transforms-3\3b1c9546348c78fb93ea44cdc358ca9a\transformed\jetified-emoji2-1.2.0\AndroidManifest.xml:26:13-68
+107            android:exported="false" >
+107-->[androidx.emoji2:emoji2:1.2.0] C:\Users\User\.gradle\caches\transforms-3\3b1c9546348c78fb93ea44cdc358ca9a\transformed\jetified-emoji2-1.2.0\AndroidManifest.xml:27:13-37
+108            <meta-data
+108-->[androidx.emoji2:emoji2:1.2.0] C:\Users\User\.gradle\caches\transforms-3\3b1c9546348c78fb93ea44cdc358ca9a\transformed\jetified-emoji2-1.2.0\AndroidManifest.xml:29:13-31:52
+109                android:name="androidx.emoji2.text.EmojiCompatInitializer"
+109-->[androidx.emoji2:emoji2:1.2.0] C:\Users\User\.gradle\caches\transforms-3\3b1c9546348c78fb93ea44cdc358ca9a\transformed\jetified-emoji2-1.2.0\AndroidManifest.xml:30:17-75
+110                android:value="androidx.startup" />
+110-->[androidx.emoji2:emoji2:1.2.0] C:\Users\User\.gradle\caches\transforms-3\3b1c9546348c78fb93ea44cdc358ca9a\transformed\jetified-emoji2-1.2.0\AndroidManifest.xml:31:17-49
+111            <meta-data
+111-->[androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\User\.gradle\caches\transforms-3\fc8d401a3ddeb03b0d602593434a4990\transformed\jetified-lifecycle-process-2.7.0\AndroidManifest.xml:29:13-31:52
+112                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
+112-->[androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\User\.gradle\caches\transforms-3\fc8d401a3ddeb03b0d602593434a4990\transformed\jetified-lifecycle-process-2.7.0\AndroidManifest.xml:30:17-78
+113                android:value="androidx.startup" />
+113-->[androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\User\.gradle\caches\transforms-3\fc8d401a3ddeb03b0d602593434a4990\transformed\jetified-lifecycle-process-2.7.0\AndroidManifest.xml:31:17-49
+114            <meta-data
+114-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\User\.gradle\caches\transforms-3\573f6a26013a5e6faa74fd7a6508f3e2\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:29:13-31:52
+115                android:name="androidx.profileinstaller.ProfileInstallerInitializer"
+115-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\User\.gradle\caches\transforms-3\573f6a26013a5e6faa74fd7a6508f3e2\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:30:17-85
+116                android:value="androidx.startup" />
+116-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\User\.gradle\caches\transforms-3\573f6a26013a5e6faa74fd7a6508f3e2\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:31:17-49
+117        </provider>
+118
+119        <receiver
+119-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\User\.gradle\caches\transforms-3\573f6a26013a5e6faa74fd7a6508f3e2\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:34:9-52:20
+120            android:name="androidx.profileinstaller.ProfileInstallReceiver"
+120-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\User\.gradle\caches\transforms-3\573f6a26013a5e6faa74fd7a6508f3e2\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:35:13-76
+121            android:directBootAware="false"
+121-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\User\.gradle\caches\transforms-3\573f6a26013a5e6faa74fd7a6508f3e2\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:36:13-44
+122            android:enabled="true"
+122-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\User\.gradle\caches\transforms-3\573f6a26013a5e6faa74fd7a6508f3e2\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:37:13-35
+123            android:exported="true"
+123-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\User\.gradle\caches\transforms-3\573f6a26013a5e6faa74fd7a6508f3e2\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:38:13-36
+124            android:permission="android.permission.DUMP" >
+124-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\User\.gradle\caches\transforms-3\573f6a26013a5e6faa74fd7a6508f3e2\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:39:13-57
+125            <intent-filter>
+125-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\User\.gradle\caches\transforms-3\573f6a26013a5e6faa74fd7a6508f3e2\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:40:13-42:29
+126                <action android:name="androidx.profileinstaller.action.INSTALL_PROFILE" />
+126-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\User\.gradle\caches\transforms-3\573f6a26013a5e6faa74fd7a6508f3e2\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:41:17-91
+126-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\User\.gradle\caches\transforms-3\573f6a26013a5e6faa74fd7a6508f3e2\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:41:25-88
+127            </intent-filter>
+128            <intent-filter>
+128-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\User\.gradle\caches\transforms-3\573f6a26013a5e6faa74fd7a6508f3e2\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:43:13-45:29
+129                <action android:name="androidx.profileinstaller.action.SKIP_FILE" />
+129-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\User\.gradle\caches\transforms-3\573f6a26013a5e6faa74fd7a6508f3e2\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:44:17-85
+129-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\User\.gradle\caches\transforms-3\573f6a26013a5e6faa74fd7a6508f3e2\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:44:25-82
+130            </intent-filter>
+131            <intent-filter>
+131-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\User\.gradle\caches\transforms-3\573f6a26013a5e6faa74fd7a6508f3e2\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:46:13-48:29
+132                <action android:name="androidx.profileinstaller.action.SAVE_PROFILE" />
+132-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\User\.gradle\caches\transforms-3\573f6a26013a5e6faa74fd7a6508f3e2\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:47:17-88
+132-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\User\.gradle\caches\transforms-3\573f6a26013a5e6faa74fd7a6508f3e2\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:47:25-85
+133            </intent-filter>
+134            <intent-filter>
+134-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\User\.gradle\caches\transforms-3\573f6a26013a5e6faa74fd7a6508f3e2\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:49:13-51:29
+135                <action android:name="androidx.profileinstaller.action.BENCHMARK_OPERATION" />
+135-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\User\.gradle\caches\transforms-3\573f6a26013a5e6faa74fd7a6508f3e2\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:50:17-95
+135-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\User\.gradle\caches\transforms-3\573f6a26013a5e6faa74fd7a6508f3e2\transformed\jetified-profileinstaller-1.3.0\AndroidManifest.xml:50:25-92
+136            </intent-filter>
+137        </receiver>
+138    </application>
+139
+140</manifest>

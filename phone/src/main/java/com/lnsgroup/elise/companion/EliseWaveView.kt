@@ -21,7 +21,7 @@ class EliseWaveView @JvmOverloads constructor(
 
     // ── State themes [primary, secondary, background] ─────────────────────────
     private val THEMES = mapOf(
-        State.IDLE       to intArrayOf(0xFF0A1A2E.toInt(), 0xFF0D2233.toInt(), 0xFF010810.toInt()),
+        State.IDLE       to intArrayOf(0xFF9933FF.toInt(), 0xFF6600CC.toInt(), 0xFF0D0010.toInt()),
         State.LISTENING  to intArrayOf(0xFF00E5FF.toInt(), 0xFF0055FF.toInt(), 0xFF000D1A.toInt()),
         State.RECORDING  to intArrayOf(0xFF00FF88.toInt(), 0xFF00D4B0.toInt(), 0xFF001A0D.toInt()),
         State.PROCESSING to intArrayOf(0xFFFF9500.toInt(), 0xFFFFCC00.toInt(), 0xFF140800.toInt()),
