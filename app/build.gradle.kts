@@ -18,13 +18,24 @@ android {
         buildConfigField("String", "API_BASE_URL", "\"https://lnsgroup.dev\"")
     }
 
+    signingConfigs {
+        create("elise") {
+            storeFile = file(System.getenv("KEYSTORE_PATH") ?: rootProject.file("elise-release.keystore"))
+            storePassword = System.getenv("KEYSTORE_PASSWORD") ?: "elise2026"
+            keyAlias = System.getenv("KEY_ALIAS") ?: "elise"
+            keyPassword = System.getenv("KEY_PASSWORD") ?: "elise2026"
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("elise")
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             buildConfigField("String", "API_BASE_URL", "\"https://lnsgroup.dev\"")
         }
         debug {
+            signingConfig = signingConfigs.getByName("elise")
             buildConfigField("String", "API_BASE_URL", "\"https://lnsgroup.dev\"")
         }
     }

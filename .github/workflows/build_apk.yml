@@ -29,14 +29,18 @@ jobs:
         run: chmod +x gradlew
 
       - name: Build Watch APK + Phone Companion APK
-        run: ./gradlew :app:assembleDebug :phone:assembleDebug -PversionCode=${{ github.run_number }} --no-daemon
+        run: ./gradlew :app:assembleRelease :phone:assembleRelease -PversionCode=${{ github.run_number }} --no-daemon
         env:
           GRADLE_OPTS: "-Xmx4g"
+          KEYSTORE_PATH: ${{ github.workspace }}/elise-release.keystore
+          KEYSTORE_PASSWORD: elise2026
+          KEY_ALIAS: elise
+          KEY_PASSWORD: elise2026
 
       - name: Rename APKs
         run: |
-          cp app/build/outputs/apk/debug/app-debug.apk ELISE_Watch_v1.0.${{ github.run_number }}.apk
-          cp phone/build/outputs/apk/debug/phone-debug.apk ELISE_Companion_v1.0.${{ github.run_number }}.apk
+          cp app/build/outputs/apk/release/app-release.apk ELISE_Watch_v1.0.${{ github.run_number }}.apk
+          cp phone/build/outputs/apk/release/phone-release.apk ELISE_Companion_v1.0.${{ github.run_number }}.apk
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
