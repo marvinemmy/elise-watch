@@ -57,6 +57,10 @@ class MainActivity : AppCompatActivity() {
         UpdateChecker.checkAsync(this) { status ->
             if (!status.startsWith("À jour")) setStatus(status)
         }
+
+        WatchOtaManager.checkAndPush(this) { status ->
+            Log.d("MainActivity", "Watch OTA: $status")
+        }
     }
 
     private fun startEliseServices() {

@@ -42,6 +42,20 @@
             android:foregroundServiceType="microphone"
             android:stopWithTask="false" />
 
+        <!-- Récepteur OTA : reçoit APK depuis la companion via Bluetooth -->
+        <service
+            android:name=".service.EliseOtaService"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.google.android.gms.wearable.CHANNEL_EVENT" />
+            </intent-filter>
+        </service>
+
+        <!-- Confirme l'installation PackageInstaller après transfert OTA -->
+        <receiver
+            android:name=".service.OtaInstallReceiver"
+            android:exported="false" />
+
         <receiver
             android:name=".service.BootReceiver"
             android:exported="true">
