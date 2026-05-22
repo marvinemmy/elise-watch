@@ -13,7 +13,6 @@ import com.lnsgroup.elise.watch.network.EliseWebSocket
 import com.lnsgroup.elise.watch.ui.EliseState
 import kotlinx.coroutines.*
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicInteger
 
 private const val TAG = "EliseForegroundService"
 private const val NOTIF_CHANNEL_ID = "elise_listening"
@@ -198,83 +197,98 @@ class EliseForegroundService : Service() {
             ?: run { broadcastState(EliseState.NOT_CONFIGURED); return }
         val serverUrl = prefs.getString(Config.KEY_SERVER_URL, Config.WS_URL) ?: Config.WS_URL
 
-        if (!com.lnsgroup.elise.watch.network.EliseConnectionHelper.hasDirectInternet()) {
-            // Fallback Bluetooth — proxy via téléphone (pas de streaming progressif)
-            Log.i(TAG, "No direct internet, routing via phone proxy")
-            val response = try {
+        val response = try {
+            if (com.lnsgroup.elise.watch.network.EliseConnectionHelper.hasDirectInternet()) {
+                val ws = EliseWebSocket(serverUrl, token)
+                try { ws.sendVoice(wav) } finally { ws.shutdown() }
+            } else {
+                Log.i(TAG, "No direct internet, routing via phone proxy")
                 com.lnsgroup.elise.watch.network.EliseConnectionHelper.sendViaPhoneProxy(
                     this, wav, token
                 )
-            } catch (e: Exception) {
-                Log.e(TAG, "proxy error: ${e.message}")
-                throw e
-            }
-            val normalised = response.transcript.trim().lowercase().trimEnd('.', '!', '?', ' ')
-            if (normalised in Config.STOP_WORDS) return
-            if (response.mp3Bytes.isNotEmpty()) {
-                broadcastState(EliseState.SPEAKING, response.transcript)
-                updateNotification(EliseState.SPEAKING)
-                isSpeaking.set(true)
-                try { audioPlayer.playMp3(response.mp3Bytes) }
-                finally { isSpeaking.set(false) }
-            }
-            return
-        }
-
-        // Chemin direct — streaming progressif : on joue le 1er chunk dès son arrivée
-        val pipeOut = audioPlayer.openStreamingPipe()
-        val chunkCount = AtomicInteger(0)
-
-        val response = try {
-            val ws = EliseWebSocket(serverUrl, token)
-            try {
-                ws.sendVoice(wav, onChunk = { chunk ->
-                    val n = chunkCount.incrementAndGet()
-                    if (n == 1) {
-                        // Premier chunk audio reçu → afficher état SPEAKING immédiatement
-                        broadcastState(EliseState.SPEAKING)
-                        updateNotification(EliseState.SPEAKING)
-                        isSpeaking.set(true)
-                    }
-                    try { pipeOut.write(chunk) } catch (_: Exception) {}
-                })
-            } finally {
-                ws.shutdown()
             }
         } catch (e: Exception) {
-            try { pipeOut.close() } catch (_: Exception) {}
             Log.e(TAG, "processWithElise error: ${e.message}")
             throw e
         }
 
-        // Fermer le pipe → MediaPlayer reçoit EOF → joue jusqu'à la fin
-        try { pipeOut.close() } catch (_: Exception) {}
-
         val normalised = response.transcript.trim().lowercase().trimEnd('.', '!', '?', ' ')
         if (normalised in Config.STOP_WORDS) {
-            audioPlayer.stop()
-            isSpeaking.set(false)
+            Log.i(TAG, "Off word: '$normalised'")
             return
         }
+        if (response.mp3Bytes.isEmpty()) return
 
-        // Si SPEAKING pas encore commencé (réponse vide), broadcast quand même
-        if (chunkCount.get() == 0 && response.mp3Bytes.isNotEmpty()) {
-            broadcastState(EliseState.SPEAKING, response.transcript)
-            updateNotification(EliseState.SPEAKING)
-            isSpeaking.set(true)
-        } else if (chunkCount.get() > 0) {
-            // Mettre à jour la transcription dans le broadcast state
-            broadcastState(EliseState.SPEAKING, response.transcript)
+        broadcastState(EliseState.SPEAKING, response.transcript)
+        updateNotification(EliseState.SPEAKING)
+        isSpeaking.set(true)
+
+        val interrupted = AtomicBoolean(false)
+
+        // Play MP3 + simultaneous VAD monitoring for real-time interruption
+        supervisorScope {
+            val monitorJob = launch(Dispatchers.IO) {
+                audioCapture.startContinuous()
+                var vadMs = 0L
+                try {
+                    while (isActive) {
+                        val (_, rms) = audioCapture.readChunk()
+                        if (rms >= Config.VAD_INTERRUPT_RMS) {
+                            vadMs += 100
+                            if (vadMs >= Config.VAD_INTERRUPT_MS) {
+                                Log.i(TAG, "Interruption vocale (rms=$rms) — arrêt lecture")
+                                interrupted.set(true)
+                                audioPlayer.stop()   // unblocks playMp3() below
+                                vibrateOnce(40)      // feedback haptique court
+                                break
+                            }
+                        } else {
+                            vadMs = 0
+                        }
+                    }
+                } finally {
+                    if (!interrupted.get()) audioCapture.stop()
+                    // If interrupted, keep mic open for recordUntilSilence()
+                }
+            }
+
+            val playJob = launch {
+                try {
+                    audioPlayer.playMp3(response.mp3Bytes)
+                } finally {
+                    monitorJob.cancel()
+                    isSpeaking.set(false)
+                }
+            }
+            playJob.join()
         }
 
-        if (chunkCount.get() > 0) {
+        // ── Interruption : enregistrer la correction et relancer ÉLISE ──────────
+        if (interrupted.get()) {
+            broadcastState(EliseState.RECORDING)
+            updateNotification(EliseState.RECORDING)
+
             try {
-                audioPlayer.awaitStreamingPlayback()
+                audioCapture.stop()   // libère le continuous recorder avant recordUntilSilence
+                val correctionPcm = audioCapture.recordUntilSilence()
+
+                if (correctionPcm.size >= Config.SAMPLE_RATE / 2) {
+                    broadcastState(EliseState.PROCESSING)
+                    updateNotification(EliseState.PROCESSING)
+                    startProcessingVibration()
+                    // Recursive call — le serveur a déjà le contexte de l'échange précédent
+                    processWithElise(correctionPcm)
+                } else {
+                    // Interruption sans voix assez longue → reprendre écoute
+                    broadcastState(EliseState.LISTENING)
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Erreur après interruption: ${e.message}")
+                broadcastState(EliseState.ERROR)
+                delay(1500)
             } finally {
-                isSpeaking.set(false)
+                stopProcessingVibration()
             }
-        } else {
-            isSpeaking.set(false)
         }
     }
 

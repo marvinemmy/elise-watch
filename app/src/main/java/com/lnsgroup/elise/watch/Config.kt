@@ -34,6 +34,10 @@ object Config {
     const val VAD_THRESHOLD_RMS  = 2000f   // amplitude min pour détecter la parole (voix forte uniquement)
     const val VAD_TRIGGER_MS     = 200L    // durée parole continue avant déclenchement
 
+    // VAD — interruption pendant SPEAKING (seuil plus haut pour ignorer le haut-parleur)
+    const val VAD_INTERRUPT_RMS  = 3500f   // plus élevé pour éviter les faux positifs du speaker
+    const val VAD_INTERRUPT_MS   = 250L    // 250ms de voix = interruption confirmée
+
     // Silence → retour WAITING depuis LISTENING
     const val SILENCE_TO_WAIT_MS = 3000L
 
