@@ -19,8 +19,8 @@ object Config {
 
     // Détection silence (arrêt enregistrement)
     const val SILENCE_THRESHOLD_RMS = 300     // amplitude RMS en dessous = silence
-    const val SILENCE_DURATION_MS = 600L      // silence de 600ms = fin de phrase (was 1800ms)
-    const val MAX_RECORD_MS = 12_000L         // sécurité : max 12 secondes
+    const val SILENCE_DURATION_MS   = 300L    // 300ms silence = fin de phrase (réduit de 600ms pour vitesse)
+    const val MAX_RECORD_MS         = 12_000L // sécurité : max 12 secondes
 
     // Wake word TFLite
     const val WAKE_WORD_MODEL = "wake_word.tflite"
@@ -43,13 +43,37 @@ object Config {
     // Silence → retour WAITING depuis LISTENING
     const val SILENCE_TO_WAIT_MS = 3000L
 
-    // Off word — arrêt vocal (normalisé lowercase, sans ponctuation)
+    // Mots/phrases de désactivation vocale (transcript Whisper normalisé lowercase, trim ponctuation fin)
+    // Inclus avec et sans virgule pour couvrir les variantes de transcription Whisper
     val STOP_WORDS = setOf(
-        // Mot d'interruption principal — phrase dédiée, sans ambiguïté
+        // ── FR — désactivation ─────────────────────────────────────────────
         "élise off", "elise off",
-        // Mots courts de secours
+        "élise, dors", "élise dors",
+        "élise, au revoir", "élise au revoir",
+        "élise, repos", "élise repos",
+        "élise, bonne nuit", "élise bonne nuit",
+        "élise, déconnecte", "élise déconnecte",
+        "élise, en veille", "élise en veille",
+        "élise, c'est tout", "élise c'est tout",
+        "élise, merci, stop", "élise merci stop",
+        "élise, ferme-toi", "élise ferme-toi",
+        "élise, silence", "élise silence",
+        "réveille-toi non", // sécurité anti-faux-positif
+        // ── EN — deactivation ──────────────────────────────────────────────
+        "elise, sleep", "elise sleep",
+        "elise, goodbye", "elise goodbye",
+        "elise, rest", "elise rest",
+        "elise, good night", "elise good night",
+        "elise, disconnect", "elise disconnect",
+        "elise, standby", "elise standby",
+        "elise, that's all", "elise that's all",
+        "elise, thank you, stop", "elise thank you stop",
+        "elise, shut down", "elise shut down",
+        "elise, silence", "elise silence",
+        // ── Mots courts universels ─────────────────────────────────────────
         "stop", "arrête", "arrêtes", "arrêter", "annule", "annuler",
-        "silence", "tais-toi", "tais toi", "ça suffit", "ca suffit"
+        "silence", "tais-toi", "tais toi", "ça suffit", "ca suffit",
+        "au revoir", "bonne nuit",
     )
 
     // Préférences

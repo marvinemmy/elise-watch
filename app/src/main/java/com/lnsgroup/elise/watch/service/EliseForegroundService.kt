@@ -1,9 +1,12 @@
 package com.lnsgroup.elise.watch.service
 
 import android.app.*
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.os.*
+import android.speech.tts.TextToSpeech
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.lnsgroup.elise.watch.Config
@@ -49,6 +52,34 @@ class EliseForegroundService : Service() {
 
     @Volatile private var currentState = EliseState.WAITING
 
+    private var wakeLock: PowerManager.WakeLock? = null
+    private var tts: TextToSpeech? = null
+    private var lastAlertedPct = 100
+
+    private val batteryReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            if (intent.action != Intent.ACTION_BATTERY_CHANGED) return
+            val level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
+            val scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, 100)
+            if (scale <= 0) return
+            val pct = level * 100 / scale
+
+            val threshold = when {
+                pct <= 15 && lastAlertedPct > 15 -> { lastAlertedPct = 15; 15 }
+                pct <= 25 && lastAlertedPct > 25 -> { lastAlertedPct = 25; 25 }
+                else -> -1
+            }
+            if (threshold > 0) {
+                val msg = if (threshold == 15)
+                    "Attention, batterie critique à $threshold pourcent."
+                else
+                    "Batterie faible, $threshold pourcent restants."
+                tts?.speak(msg, TextToSpeech.QUEUE_FLUSH, null, "battery_$threshold")
+                Log.i(TAG, "Battery alert: $pct%")
+            }
+        }
+    }
+
     override fun onCreate() {
         super.onCreate()
         createNotificationChannel()
@@ -58,6 +89,23 @@ class EliseForegroundService : Service() {
         healthCollector  = HealthDataCollector(this)
         musicController  = MusicController(this)
         healthCollector.start()
+
+        // Keep CPU running in battery saver mode
+        val pm = getSystemService(PowerManager::class.java)
+        wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "elise:foreground").apply {
+            setReferenceCounted(false)
+            acquire()
+        }
+
+        // TTS for battery alerts
+        tts = TextToSpeech(this) { status ->
+            if (status == TextToSpeech.SUCCESS) {
+                tts?.language = java.util.Locale.FRENCH
+            }
+        }
+
+        // Battery level monitoring
+        registerReceiver(batteryReceiver, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -83,6 +131,9 @@ class EliseForegroundService : Service() {
         healthCollector.stop()
         wakeWordDetector.close()
         scope.cancel()
+        try { unregisterReceiver(batteryReceiver) } catch (_: Exception) {}
+        tts?.shutdown(); tts = null
+        wakeLock?.let { if (it.isHeld) it.release() }
     }
 
     // ── Boucle principale ──────────────────────────────────────────────────────

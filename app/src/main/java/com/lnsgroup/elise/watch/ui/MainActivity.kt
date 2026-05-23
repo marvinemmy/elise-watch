@@ -6,7 +6,12 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Bundle
+import android.os.PowerManager
+import android.provider.Settings
+import android.view.GestureDetector
+import android.view.MotionEvent
 import android.view.WindowManager
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -20,6 +25,9 @@ import com.lnsgroup.elise.watch.service.EliseForegroundService
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
+
+    // Double tap pour activer Élise
+    private lateinit var gestureDetector: GestureDetector
 
     private val stateReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -44,12 +52,28 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        // Double tap → activer Élise
+        gestureDetector = GestureDetector(this, object : GestureDetector.SimpleOnGestureListener() {
+            override fun onDoubleTap(e: MotionEvent): Boolean {
+                android.util.Log.d("ELISE_TAP", "double tap recu")
+                startService(Intent(this@MainActivity, EliseForegroundService::class.java).apply {
+                    action = EliseForegroundService.ACTION_ACTIVATE
+                })
+                return true
+            }
+            // Single tap aussi supporté pour compatibilité
+            override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
+                startService(Intent(this@MainActivity, EliseForegroundService::class.java).apply {
+                    action = EliseForegroundService.ACTION_ACTIVATE
+                })
+                return true
+            }
+        })
+
         binding.particleView.isClickable = true
-        binding.particleView.setOnClickListener {
-            android.util.Log.d("ELISE_TAP", "tap recu")
-            startService(Intent(this, EliseForegroundService::class.java).apply {
-                action = EliseForegroundService.ACTION_ACTIVATE
-            })
+        binding.particleView.setOnTouchListener { _, event ->
+            gestureDetector.onTouchEvent(event)
+            true
         }
 
         val filter = IntentFilter(EliseForegroundService.ACTION_STATE_CHANGED)
@@ -57,14 +81,25 @@ class MainActivity : AppCompatActivity() {
 
         loadPrefs()
         checkPermissions()
+        requestBatteryOptimizationIgnore()
         UpdateChecker.checkAsync(this)
     }
 
     override fun onDestroy() {
         super.onDestroy()
         try { unregisterReceiver(stateReceiver) } catch (_: Exception) {}
-        if (isFinishing) {
-            EliseForegroundService.stop(this)
+        if (isFinishing) EliseForegroundService.stop(this)
+    }
+
+    // Demande à l'OS d'ignorer les optimisations batterie pour le service
+    private fun requestBatteryOptimizationIgnore() {
+        val pm = getSystemService(PowerManager::class.java)
+        if (!pm.isIgnoringBatteryOptimizations(packageName)) {
+            try {
+                startActivity(Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                    data = Uri.parse("package:$packageName")
+                })
+            } catch (_: Exception) {}
         }
     }
 
@@ -88,13 +123,9 @@ class MainActivity : AppCompatActivity() {
 
     private fun loadPrefs() {
         val prefs = getSharedPreferences(Config.PREF_FILE, Context.MODE_PRIVATE)
-        prefs.edit()
-            .putString(Config.KEY_SERVER_URL, Config.WS_URL_PROD)
-            .apply()
+        prefs.edit().putString(Config.KEY_SERVER_URL, Config.WS_URL_PROD).apply()
         if (!prefs.contains(Config.KEY_TOKEN)) {
-            prefs.edit()
-                .putString(Config.KEY_TOKEN, Config.PRELOADED_TOKEN)
-                .apply()
+            prefs.edit().putString(Config.KEY_TOKEN, Config.PRELOADED_TOKEN).apply()
         }
     }
 }

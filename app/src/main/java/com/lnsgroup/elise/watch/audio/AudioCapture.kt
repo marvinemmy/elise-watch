@@ -47,15 +47,15 @@ class AudioCapture {
             Config.AUDIO_FORMAT,
             bufferSize * 4
         )
+        // NS: always suppress background noise for cleaner VAD and wake word detection
+        if (NoiseSuppressor.isAvailable()) {
+            try { NoiseSuppressor.create(rec.audioSessionId)?.enabled = true }
+            catch (_: Exception) {}
+        }
         if (aec) {
             // AEC: cancels speaker echo from mic signal (hardware-backed when available)
             if (AcousticEchoCanceler.isAvailable()) {
                 try { AcousticEchoCanceler.create(rec.audioSessionId)?.enabled = true }
-                catch (_: Exception) {}
-            }
-            // NS: suppresses background noise for cleaner VAD
-            if (NoiseSuppressor.isAvailable()) {
-                try { NoiseSuppressor.create(rec.audioSessionId)?.enabled = true }
                 catch (_: Exception) {}
             }
         }
@@ -94,7 +94,7 @@ class AudioCapture {
 
         // Attendre que le hardware micro soit libéré (stop() vient d'être appelé)
         var rec: AudioRecord? = null
-        for (attempt in 1..5) {
+        for (attempt in 1..3) {
             val candidate = AudioRecord(
                 MediaRecorder.AudioSource.MIC,
                 Config.SAMPLE_RATE,
@@ -107,10 +107,14 @@ class AudioCapture {
                 break
             }
             candidate.release()
-            Log.w("AudioCapture", "AudioRecord not ready, attempt $attempt/5")
-            Thread.sleep(150)
+            Log.w("AudioCapture", "AudioRecord not ready, attempt $attempt/3")
+            Thread.sleep(50)
         }
-        if (rec == null) throw IllegalStateException("AudioRecord failed to initialize after 5 attempts")
+        if (rec == null) throw IllegalStateException("AudioRecord failed to initialize after 3 attempts")
+        if (NoiseSuppressor.isAvailable()) {
+            try { NoiseSuppressor.create(rec.audioSessionId)?.enabled = true }
+            catch (_: Exception) {}
+        }
         rec.startRecording()
 
         val chunkSize = Config.SAMPLE_RATE / 10  // 100ms chunks
