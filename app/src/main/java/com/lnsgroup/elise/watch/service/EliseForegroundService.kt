@@ -10,7 +10,8 @@ import com.lnsgroup.elise.watch.Config
 import com.lnsgroup.elise.watch.audio.AudioCapture
 import com.lnsgroup.elise.watch.audio.AudioPlayer
 import com.lnsgroup.elise.watch.audio.WakeWordDetector
-import com.lnsgroup.elise.watch.health.HeartRateMonitor
+import com.lnsgroup.elise.watch.health.HealthDataCollector
+import com.lnsgroup.elise.watch.health.HealthSnapshot
 import com.lnsgroup.elise.watch.media.MusicController
 import com.lnsgroup.elise.watch.network.EliseWebSocket
 import com.lnsgroup.elise.watch.ui.EliseState
@@ -25,16 +26,18 @@ class EliseForegroundService : Service() {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private var listeningJob: Job? = null
+    private var healthJob: Job? = null
     private lateinit var audioCapture: AudioCapture
     private lateinit var audioPlayer: AudioPlayer
     private lateinit var wakeWordDetector: WakeWordDetector
-    private lateinit var heartRateMonitor: HeartRateMonitor
+    private lateinit var healthCollector: HealthDataCollector
     private lateinit var musicController: MusicController
 
     companion object {
-        const val ACTION_STATE_CHANGED = "com.lnsgroup.elise.watch.STATE_CHANGED"
-        const val ACTION_ACTIVATE      = "com.lnsgroup.elise.watch.ACTIVATE"
-        const val EXTRA_STATE          = "state"
+        const val ACTION_STATE_CHANGED  = "com.lnsgroup.elise.watch.STATE_CHANGED"
+        const val ACTION_ACTIVATE       = "com.lnsgroup.elise.watch.ACTIVATE"
+        const val ACTION_HEALTH_UPDATE  = "com.lnsgroup.elise.watch.HEALTH_UPDATE"
+        const val EXTRA_STATE           = "state"
 
         fun start(context: Context) {
             context.startForegroundService(Intent(context, EliseForegroundService::class.java))
@@ -52,12 +55,13 @@ class EliseForegroundService : Service() {
     override fun onCreate() {
         super.onCreate()
         createNotificationChannel()
-        audioCapture       = AudioCapture()
-        audioPlayer        = AudioPlayer(cacheDir)
-        wakeWordDetector   = WakeWordDetector(this)
-        heartRateMonitor   = HeartRateMonitor(this)
-        musicController    = MusicController(this)
-        heartRateMonitor.start()
+        audioCapture     = AudioCapture()
+        audioPlayer      = AudioPlayer(cacheDir)
+        wakeWordDetector = WakeWordDetector(this)
+        healthCollector  = HealthDataCollector(this)
+        musicController  = MusicController(this)
+        healthCollector.start()
+        startHealthBroadcastLoop()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -78,9 +82,10 @@ class EliseForegroundService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         listeningJob?.cancel()
+        healthJob?.cancel()
         audioCapture.stop()
         audioPlayer.cleanup()
-        heartRateMonitor.stop()
+        healthCollector.stop()
         wakeWordDetector.close()
         scope.cancel()
     }
@@ -218,7 +223,7 @@ class EliseForegroundService : Service() {
         val serverUrl = prefs.getString(Config.KEY_SERVER_URL, Config.WS_URL) ?: Config.WS_URL
 
         // Lecture des capteurs biologiques et notifications avant envoi
-        val hrBpm = heartRateMonitor.latestBpm.takeIf { it > 0 }
+        val hrBpm = healthCollector.lastHr.takeIf { it > 0 }
 
         val response = try {
             if (com.lnsgroup.elise.watch.network.EliseConnectionHelper.hasDirectInternet()) {
@@ -378,6 +383,33 @@ class EliseForegroundService : Service() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
             vibrator?.vibrate(VibrationEffect.createOneShot(ms, VibrationEffect.DEFAULT_AMPLITUDE))
         else @Suppress("DEPRECATION") vibrator?.vibrate(ms)
+    }
+
+    // ── Boucle santé : snapshot toutes les 10s → broadcast vers HudArcView ─────
+
+    private fun startHealthBroadcastLoop() {
+        healthJob?.cancel()
+        healthJob = scope.launch {
+            while (isActive) {
+                broadcastHealth(healthCollector.snapshot())
+                delay(10_000)
+            }
+        }
+    }
+
+    private fun broadcastHealth(snap: HealthSnapshot) {
+        sendBroadcast(Intent(ACTION_HEALTH_UPDATE).apply {
+            setPackage(packageName)
+            putExtra("hr",           snap.heartRateBpm)
+            putExtra("steps",        snap.stepsSinceStart)
+            putExtra("stress",       snap.stressLevel)
+            putExtra("fatigue",      snap.fatigueLevel)
+            putExtra("agitation",    snap.agitationLevel)
+            putExtra("activeMinutes", snap.activeMinutes)
+            putExtra("score",        snap.socialScore)
+            putExtra("scoreLabel",   snap.scoreLabel)
+            putExtra("scoreColor",   snap.scoreColor)
+        })
     }
 
     private fun broadcastState(state: EliseState, detail: String = "") {

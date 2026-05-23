@@ -14,6 +14,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.lnsgroup.elise.watch.Config
 import com.lnsgroup.elise.watch.databinding.ActivityMainBinding
+import com.lnsgroup.elise.watch.health.HealthSnapshot
 import com.lnsgroup.elise.watch.network.UpdateChecker
 import com.lnsgroup.elise.watch.service.EliseForegroundService
 
@@ -23,16 +24,34 @@ class MainActivity : AppCompatActivity() {
 
     private val stateReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
-            val stateName = intent.getStringExtra(EliseForegroundService.EXTRA_STATE) ?: return
-            val state = try { EliseState.valueOf(stateName) } catch (e: Exception) { EliseState.WAITING }
-            binding.particleView.state = state
+            when (intent.action) {
+                EliseForegroundService.ACTION_STATE_CHANGED -> {
+                    val stateName = intent.getStringExtra(EliseForegroundService.EXTRA_STATE) ?: return
+                    val state = try { EliseState.valueOf(stateName) } catch (_: Exception) { EliseState.WAITING }
+                    binding.particleView.state = state
+                }
+                EliseForegroundService.ACTION_HEALTH_UPDATE -> {
+                    val snap = HealthSnapshot(
+                        heartRateBpm    = intent.getIntExtra("hr", 0),
+                        stepsSinceStart = intent.getLongExtra("steps", 0L),
+                        stressLevel     = intent.getFloatExtra("stress", 50f),
+                        fatigueLevel    = intent.getFloatExtra("fatigue", 50f),
+                        agitationLevel  = intent.getFloatExtra("agitation", 0f),
+                        activeMinutes   = intent.getIntExtra("activeMinutes", 0),
+                        socialScore     = intent.getIntExtra("score", 50),
+                        scoreLabel      = intent.getStringExtra("scoreLabel") ?: "—",
+                        scoreColor      = intent.getIntExtra("scoreColor", 0xFF00E5FF.toInt()),
+                    )
+                    binding.hudArcView.update(snap)
+                }
+            }
         }
     }
 
-    private val micPermLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { granted ->
-        if (granted) startEliseService()
+    private val permLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { results ->
+        if (results[Manifest.permission.RECORD_AUDIO] == true) startEliseService()
         else Toast.makeText(this, "Microphone required for ELISE", Toast.LENGTH_LONG).show()
     }
 
@@ -50,7 +69,10 @@ class MainActivity : AppCompatActivity() {
             })
         }
 
-        val filter = IntentFilter(EliseForegroundService.ACTION_STATE_CHANGED)
+        val filter = IntentFilter().apply {
+            addAction(EliseForegroundService.ACTION_STATE_CHANGED)
+            addAction(EliseForegroundService.ACTION_HEALTH_UPDATE)
+        }
         registerReceiver(stateReceiver, filter, RECEIVER_NOT_EXPORTED)
 
         loadPrefs()
@@ -67,12 +89,16 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun checkPermissions() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
-            == PackageManager.PERMISSION_GRANTED) {
-            startEliseService()
-        } else {
-            micPermLauncher.launch(Manifest.permission.RECORD_AUDIO)
+        val required = arrayOf(
+            Manifest.permission.RECORD_AUDIO,
+            Manifest.permission.BODY_SENSORS,
+            "android.permission.ACTIVITY_RECOGNITION",
+        )
+        val missing = required.filter {
+            ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
         }
+        if (missing.isEmpty()) startEliseService()
+        else permLauncher.launch(missing.toTypedArray())
     }
 
     private fun startEliseService() {
