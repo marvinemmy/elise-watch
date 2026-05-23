@@ -68,6 +68,7 @@ class EliseForegroundService : Service() {
             return START_STICKY
         }
         startForeground(NOTIF_ID, buildNotification(EliseState.WAITING))
+        WatchRoutineScheduler.scheduleAll(this)
         startMainLoop()
         return START_NOT_STICKY
     }

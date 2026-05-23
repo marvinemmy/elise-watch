@@ -1,6 +1,8 @@
 package com.lnsgroup.elise.watch
 
 object Config {
+    const val API_BASE_URL = "https://lnsgroup.dev"
+
     // URL WebSocket du serveur ÉLISE — cloud Oracle permanent (0€)
     const val WS_URL_PROD  = "wss://lnsgroup.dev/ws/voice"
     const val WS_URL       = WS_URL_PROD                          // ← toujours la prod
