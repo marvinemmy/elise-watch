@@ -14,7 +14,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.lnsgroup.elise.watch.Config
 import com.lnsgroup.elise.watch.databinding.ActivityMainBinding
-import com.lnsgroup.elise.watch.health.HealthSnapshot
 import com.lnsgroup.elise.watch.network.UpdateChecker
 import com.lnsgroup.elise.watch.service.EliseForegroundService
 
@@ -24,26 +23,10 @@ class MainActivity : AppCompatActivity() {
 
     private val stateReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
-            when (intent.action) {
-                EliseForegroundService.ACTION_STATE_CHANGED -> {
-                    val stateName = intent.getStringExtra(EliseForegroundService.EXTRA_STATE) ?: return
-                    val state = try { EliseState.valueOf(stateName) } catch (_: Exception) { EliseState.WAITING }
-                    binding.particleView.state = state
-                }
-                EliseForegroundService.ACTION_HEALTH_UPDATE -> {
-                    val snap = HealthSnapshot(
-                        heartRateBpm    = intent.getIntExtra("hr", 0),
-                        stepsSinceStart = intent.getLongExtra("steps", 0L),
-                        stressLevel     = intent.getFloatExtra("stress", 50f),
-                        fatigueLevel    = intent.getFloatExtra("fatigue", 50f),
-                        agitationLevel  = intent.getFloatExtra("agitation", 0f),
-                        activeMinutes   = intent.getIntExtra("activeMinutes", 0),
-                        socialScore     = intent.getIntExtra("score", 50),
-                        scoreLabel      = intent.getStringExtra("scoreLabel") ?: "—",
-                        scoreColor      = intent.getIntExtra("scoreColor", 0xFF00E5FF.toInt()),
-                    )
-                    binding.hudArcView.update(snap)
-                }
+            if (intent.action == EliseForegroundService.ACTION_STATE_CHANGED) {
+                val stateName = intent.getStringExtra(EliseForegroundService.EXTRA_STATE) ?: return
+                val state = try { EliseState.valueOf(stateName) } catch (_: Exception) { EliseState.WAITING }
+                binding.particleView.state = state
             }
         }
     }
@@ -69,10 +52,7 @@ class MainActivity : AppCompatActivity() {
             })
         }
 
-        val filter = IntentFilter().apply {
-            addAction(EliseForegroundService.ACTION_STATE_CHANGED)
-            addAction(EliseForegroundService.ACTION_HEALTH_UPDATE)
-        }
+        val filter = IntentFilter(EliseForegroundService.ACTION_STATE_CHANGED)
         registerReceiver(stateReceiver, filter, RECEIVER_NOT_EXPORTED)
 
         loadPrefs()

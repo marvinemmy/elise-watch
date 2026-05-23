@@ -4,13 +4,14 @@ package com.lnsgroup.elise.companion.databinding;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewbinding.ViewBinding;
 import androidx.viewbinding.ViewBindings;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.lnsgroup.elise.companion.R;
 import java.lang.NullPointerException;
 import java.lang.Override;
@@ -18,28 +19,46 @@ import java.lang.String;
 
 public final class FragmentRoutinesBinding implements ViewBinding {
   @NonNull
-  private final LinearLayout rootView;
+  private final CoordinatorLayout rootView;
 
   @NonNull
-  public final TextView btnAnalyze;
+  public final TextView btnRefresh;
 
   @NonNull
-  public final RecyclerView rvRoutines;
+  public final FloatingActionButton fab;
 
   @NonNull
-  public final TextView tvRoutinesEmpty;
+  public final RecyclerView rvItems;
 
-  private FragmentRoutinesBinding(@NonNull LinearLayout rootView, @NonNull TextView btnAnalyze,
-      @NonNull RecyclerView rvRoutines, @NonNull TextView tvRoutinesEmpty) {
+  @NonNull
+  public final TextView tabRoutines;
+
+  @NonNull
+  public final TextView tabTriggers;
+
+  @NonNull
+  public final TextView tvEmpty;
+
+  @NonNull
+  public final TextView tvSubtitle;
+
+  private FragmentRoutinesBinding(@NonNull CoordinatorLayout rootView, @NonNull TextView btnRefresh,
+      @NonNull FloatingActionButton fab, @NonNull RecyclerView rvItems,
+      @NonNull TextView tabRoutines, @NonNull TextView tabTriggers, @NonNull TextView tvEmpty,
+      @NonNull TextView tvSubtitle) {
     this.rootView = rootView;
-    this.btnAnalyze = btnAnalyze;
-    this.rvRoutines = rvRoutines;
-    this.tvRoutinesEmpty = tvRoutinesEmpty;
+    this.btnRefresh = btnRefresh;
+    this.fab = fab;
+    this.rvItems = rvItems;
+    this.tabRoutines = tabRoutines;
+    this.tabTriggers = tabTriggers;
+    this.tvEmpty = tvEmpty;
+    this.tvSubtitle = tvSubtitle;
   }
 
   @Override
   @NonNull
-  public LinearLayout getRoot() {
+  public CoordinatorLayout getRoot() {
     return rootView;
   }
 
@@ -64,26 +83,50 @@ public final class FragmentRoutinesBinding implements ViewBinding {
     // This is done to optimize the compiled bytecode for size and performance.
     int id;
     missingId: {
-      id = R.id.btnAnalyze;
-      TextView btnAnalyze = ViewBindings.findChildViewById(rootView, id);
-      if (btnAnalyze == null) {
+      id = R.id.btnRefresh;
+      TextView btnRefresh = ViewBindings.findChildViewById(rootView, id);
+      if (btnRefresh == null) {
         break missingId;
       }
 
-      id = R.id.rvRoutines;
-      RecyclerView rvRoutines = ViewBindings.findChildViewById(rootView, id);
-      if (rvRoutines == null) {
+      id = R.id.fab;
+      FloatingActionButton fab = ViewBindings.findChildViewById(rootView, id);
+      if (fab == null) {
         break missingId;
       }
 
-      id = R.id.tvRoutinesEmpty;
-      TextView tvRoutinesEmpty = ViewBindings.findChildViewById(rootView, id);
-      if (tvRoutinesEmpty == null) {
+      id = R.id.rvItems;
+      RecyclerView rvItems = ViewBindings.findChildViewById(rootView, id);
+      if (rvItems == null) {
         break missingId;
       }
 
-      return new FragmentRoutinesBinding((LinearLayout) rootView, btnAnalyze, rvRoutines,
-          tvRoutinesEmpty);
+      id = R.id.tabRoutines;
+      TextView tabRoutines = ViewBindings.findChildViewById(rootView, id);
+      if (tabRoutines == null) {
+        break missingId;
+      }
+
+      id = R.id.tabTriggers;
+      TextView tabTriggers = ViewBindings.findChildViewById(rootView, id);
+      if (tabTriggers == null) {
+        break missingId;
+      }
+
+      id = R.id.tvEmpty;
+      TextView tvEmpty = ViewBindings.findChildViewById(rootView, id);
+      if (tvEmpty == null) {
+        break missingId;
+      }
+
+      id = R.id.tvSubtitle;
+      TextView tvSubtitle = ViewBindings.findChildViewById(rootView, id);
+      if (tvSubtitle == null) {
+        break missingId;
+      }
+
+      return new FragmentRoutinesBinding((CoordinatorLayout) rootView, btnRefresh, fab, rvItems,
+          tabRoutines, tabTriggers, tvEmpty, tvSubtitle);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));

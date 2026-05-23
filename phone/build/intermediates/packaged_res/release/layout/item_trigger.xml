@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/card_glass"
+    android:layout_marginStart="4dp"
+    android:layout_marginEnd="4dp"
+    android:layout_marginBottom="8dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="16dp"
+        android:paddingEnd="12dp"
+        android:paddingTop="14dp"
+        android:paddingBottom="14dp">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tvTriggerName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="#CCE8FF"
+                android:textSize="13sp" />
+
+            <TextView
+                android:id="@+id/tvTriggerCondition"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="#00BFFF"
+                android:textSize="10sp"
+                android:layout_marginTop="3dp" />
+
+            <TextView
+                android:id="@+id/tvTriggerAction"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="#335566"
+                android:textSize="10sp"
+                android:layout_marginTop="2dp" />
+        </LinearLayout>
+
+        <Switch
+            android:id="@+id/switchTrigger"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:thumbTint="#00E5FF"
+            android:trackTint="#1A3A4A" />
+
+        <TextView
+            android:id="@+id/btnDeleteTrigger"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:gravity="center"
+            android:text="✕"
+            android:textColor="#FF4444"
+            android:textSize="14sp"
+            android:layout_marginStart="4dp"
+            android:clickable="true"
+            android:focusable="true" />
+    </LinearLayout>
+
+</LinearLayout>

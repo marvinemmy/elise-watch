@@ -1,20 +1,20 @@
 -- Merging decision tree log ---
 provider#androidx.core.content.FileProvider
-INJECTED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:115:9-123:20
+INJECTED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:124:9-132:20
 	android:grantUriPermissions
-		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:119:13-47
+		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:128:13-47
 	android:authorities
 		INJECTED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml
-		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:117:13-64
+		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:126:13-64
 	android:exported
-		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:118:13-37
+		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:127:13-37
 	android:name
-		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:116:13-62
+		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:125:13-62
 manifest
-ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:2:1-126:12
-INJECTED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:2:1-126:12
-INJECTED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:2:1-126:12
-INJECTED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:2:1-126:12
+ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:2:1-135:12
+INJECTED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:2:1-135:12
+INJECTED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:2:1-135:12
+INJECTED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:2:1-135:12
 MERGED from [androidx.databinding:viewbinding:8.2.2] C:\Users\User\.gradle\caches\transforms-3\d460d182bad700eababbb6d42aa9f3a6\transformed\jetified-viewbinding-8.2.2\AndroidManifest.xml:2:1-7:12
 MERGED from [com.google.android.material:material:1.11.0] C:\Users\User\.gradle\caches\transforms-3\c006c7e4abea24f449d8c80c9e056f58\transformed\material-1.11.0\AndroidManifest.xml:17:1-24:12
 MERGED from [androidx.constraintlayout:constraintlayout:2.1.4] C:\Users\User\.gradle\caches\transforms-3\2a79237028878ecf82651907de158179\transformed\constraintlayout-2.1.4\AndroidManifest.xml:2:1-11:12
@@ -105,123 +105,135 @@ MERGED from [com.google.android.datatransport:transport-backend-cct:2.3.3] C:\Us
 MERGED from [com.google.android.datatransport:transport-backend-cct:2.3.3] C:\Users\User\.gradle\caches\transforms-3\cdc669d8e6c73cc104f74d58383a466d\transformed\jetified-transport-backend-cct-2.3.3\AndroidManifest.xml:26:5-67
 	android:name
 		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:5:22-64
+uses-permission#android.permission.SCHEDULE_EXACT_ALARM
+ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:7:5-79
+	android:name
+		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:7:22-76
+uses-permission#android.permission.USE_EXACT_ALARM
+ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:8:5-74
+	android:name
+		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:8:22-71
+uses-permission#android.permission.WAKE_LOCK
+ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:9:5-68
+	android:name
+		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:9:22-65
 uses-permission#android.permission.ACCESS_NETWORK_STATE
-ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:6:5-79
+ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:10:5-79
 MERGED from [com.google.android.datatransport:transport-backend-cct:2.3.3] C:\Users\User\.gradle\caches\transforms-3\cdc669d8e6c73cc104f74d58383a466d\transformed\jetified-transport-backend-cct-2.3.3\AndroidManifest.xml:25:5-79
 MERGED from [com.google.android.datatransport:transport-backend-cct:2.3.3] C:\Users\User\.gradle\caches\transforms-3\cdc669d8e6c73cc104f74d58383a466d\transformed\jetified-transport-backend-cct-2.3.3\AndroidManifest.xml:25:5-79
 MERGED from [com.google.android.datatransport:transport-runtime:2.2.6] C:\Users\User\.gradle\caches\transforms-3\1d946e6949b06adac1584face0c88032\transformed\jetified-transport-runtime-2.2.6\AndroidManifest.xml:22:5-79
 MERGED from [com.google.android.datatransport:transport-runtime:2.2.6] C:\Users\User\.gradle\caches\transforms-3\1d946e6949b06adac1584face0c88032\transformed\jetified-transport-runtime-2.2.6\AndroidManifest.xml:22:5-79
 	android:name
-		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:6:22-76
+		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:10:22-76
 uses-permission#android.permission.RECORD_AUDIO
-ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:9:5-71
+ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:13:5-71
 	android:name
-		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:9:22-68
+		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:13:22-68
 uses-permission#android.permission.MODIFY_AUDIO_SETTINGS
-ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:10:5-80
+ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:14:5-80
 	android:name
-		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:10:22-77
+		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:14:22-77
 uses-permission#android.permission.SYSTEM_ALERT_WINDOW
-ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:13:5-78
+ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:17:5-78
 	android:name
-		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:13:22-75
+		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:17:22-75
 uses-permission#android.permission.FOREGROUND_SERVICE
-ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:16:5-77
+ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:20:5-77
 	android:name
-		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:16:22-74
+		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:20:22-74
 uses-permission#android.permission.FOREGROUND_SERVICE_MICROPHONE
-ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:17:5-88
+ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:21:5-88
 	android:name
-		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:17:22-85
+		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:21:22-85
 uses-permission#android.permission.FOREGROUND_SERVICE_CAMERA
-ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:18:5-84
+ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:22:5-84
 	android:name
-		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:18:22-81
+		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:22:22-81
 uses-permission#android.permission.FOREGROUND_SERVICE_LOCATION
-ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:19:5-86
+ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:23:5-86
 	android:name
-		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:19:22-83
+		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:23:22-83
 uses-permission#android.permission.READ_PHONE_STATE
-ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:22:5-75
+ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:26:5-75
 	android:name
-		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:22:22-72
+		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:26:22-72
 uses-permission#android.permission.READ_CALL_LOG
-ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:23:5-72
+ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:27:5-72
 	android:name
-		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:23:22-69
+		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:27:22-69
 uses-permission#android.permission.PROCESS_OUTGOING_CALLS
-ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:24:5-81
+ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:28:5-81
 	android:name
-		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:24:22-78
+		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:28:22-78
 uses-permission#android.permission.CAMERA
-ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:27:5-65
+ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:31:5-65
 	android:name
-		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:27:22-62
+		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:31:22-62
 uses-permission#android.permission.ACCESS_FINE_LOCATION
-ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:30:5-79
+ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:34:5-79
 	android:name
-		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:30:22-76
+		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:34:22-76
 uses-permission#android.permission.ACCESS_COARSE_LOCATION
-ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:31:5-81
+ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:35:5-81
 	android:name
-		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:31:22-78
+		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:35:22-78
 uses-permission#android.permission.ACCESS_BACKGROUND_LOCATION
-ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:32:5-85
+ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:36:5-85
 	android:name
-		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:32:22-82
+		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:36:22-82
 uses-permission#android.permission.READ_CONTACTS
-ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:35:5-72
+ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:39:5-72
 	android:name
-		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:35:22-69
+		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:39:22-69
 uses-permission#android.permission.READ_CALENDAR
-ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:38:5-72
+ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:42:5-72
 	android:name
-		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:38:22-69
+		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:42:22-69
 uses-permission#android.permission.WRITE_CALENDAR
-ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:39:5-73
+ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:43:5-73
 	android:name
-		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:39:22-70
+		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:43:22-70
 uses-permission#android.permission.POST_NOTIFICATIONS
-ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:42:5-77
+ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:46:5-77
 	android:name
-		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:42:22-74
+		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:46:22-74
 uses-permission#android.permission.BIND_NOTIFICATION_LISTENER_SERVICE
-ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:43:5-93
+ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:47:5-93
 	android:name
-		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:43:22-90
+		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:47:22-90
 uses-permission#android.permission.READ_MEDIA_IMAGES
-ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:46:5-76
+ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:50:5-76
 	android:name
-		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:46:22-73
+		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:50:22-73
 uses-permission#android.permission.READ_MEDIA_VIDEO
-ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:47:5-75
+ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:51:5-75
 	android:name
-		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:47:22-72
+		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:51:22-72
 uses-permission#android.permission.READ_MEDIA_AUDIO
-ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:48:5-75
+ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:52:5-75
 	android:name
-		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:48:22-72
+		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:52:22-72
 uses-permission#android.permission.RECEIVE_BOOT_COMPLETED
-ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:51:5-81
+ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:55:5-81
 	android:name
-		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:51:22-78
+		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:55:22-78
 uses-permission#android.permission.REQUEST_INSTALL_PACKAGES
-ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:54:5-83
+ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:58:5-83
 	android:name
-		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:54:22-80
+		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:58:22-80
 uses-permission#android.permission.BLUETOOTH
-ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:57:5-95
+ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:61:5-95
 	android:maxSdkVersion
-		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:57:66-92
+		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:61:66-92
 	android:name
-		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:57:22-65
+		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:61:22-65
 uses-permission#android.permission.BLUETOOTH_CONNECT
-ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:58:5-76
+ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:62:5-76
 	android:name
-		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:58:22-73
+		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:62:22-73
 application
-ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:60:5-125:19
-INJECTED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:60:5-125:19
+ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:64:5-134:19
+INJECTED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:64:5-134:19
 MERGED from [com.google.android.material:material:1.11.0] C:\Users\User\.gradle\caches\transforms-3\c006c7e4abea24f449d8c80c9e056f58\transformed\material-1.11.0\AndroidManifest.xml:22:5-20
 MERGED from [com.google.android.material:material:1.11.0] C:\Users\User\.gradle\caches\transforms-3\c006c7e4abea24f449d8c80c9e056f58\transformed\material-1.11.0\AndroidManifest.xml:22:5-20
 MERGED from [androidx.constraintlayout:constraintlayout:2.1.4] C:\Users\User\.gradle\caches\transforms-3\2a79237028878ecf82651907de158179\transformed\constraintlayout-2.1.4\AndroidManifest.xml:9:5-20
@@ -273,87 +285,93 @@ MERGED from [com.google.android.odml:image:1.0.0-beta1] C:\Users\User\.gradle\ca
 	android:appComponentFactory
 		ADDED from [androidx.core:core:1.12.0] C:\Users\User\.gradle\caches\transforms-3\01be542a8a7642ecba403b94caa2bdf6\transformed\core-1.12.0\AndroidManifest.xml:28:18-86
 	android:supportsRtl
-		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:65:9-35
+		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:69:9-35
 	android:label
-		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:61:9-30
+		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:65:9-30
 	android:icon
-		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:62:9-42
+		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:66:9-42
 	android:allowBackup
-		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:64:9-36
+		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:68:9-36
 	android:theme
-		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:63:9-43
+		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:67:9-43
 activity#com.lnsgroup.elise.companion.MainActivity
-ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:68:9-76:20
+ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:72:9-80:20
 	android:screenOrientation
-		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:71:13-49
+		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:75:13-49
 	android:exported
-		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:70:13-36
+		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:74:13-36
 	android:name
-		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:69:13-41
+		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:73:13-41
 intent-filter#action:name:android.intent.action.MAIN+category:name:android.intent.category.LAUNCHER
-ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:72:13-75:29
+ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:76:13-79:29
 action#android.intent.action.MAIN
-ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:73:17-69
+ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:77:17-69
 	android:name
-		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:73:25-66
+		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:77:25-66
 category#android.intent.category.LAUNCHER
-ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:74:17-77
+ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:78:17-77
 	android:name
-		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:74:27-74
+		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:78:27-74
 service#com.lnsgroup.elise.companion.EliseOverlayService
-ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:79:9-82:40
+ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:83:9-86:40
 	android:exported
-		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:82:13-37
+		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:86:13-37
 	android:foregroundServiceType
-		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:81:13-71
+		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:85:13-71
 	android:name
-		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:80:13-48
+		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:84:13-48
 activity#com.lnsgroup.elise.companion.FaceScanActivity
-ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:85:9-89:46
+ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:89:9-93:46
 	android:screenOrientation
-		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:88:13-49
+		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:92:13-49
 	android:label
-		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:89:13-43
+		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:93:13-43
 	android:exported
-		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:87:13-37
+		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:91:13-37
 	android:name
-		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:86:13-45
+		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:90:13-45
 service#com.lnsgroup.elise.companion.EliseCallMonitor
-ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:92:9-94:40
+ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:96:9-98:40
 	android:exported
-		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:94:13-37
+		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:98:13-37
 	android:name
-		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:93:13-45
+		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:97:13-45
 service#com.lnsgroup.elise.companion.EliseWatchProxyService
-ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:97:9-103:19
+ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:101:9-107:19
 	android:exported
-		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:99:13-36
+		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:103:13-36
 	android:name
-		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:98:13-51
+		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:102:13-51
 intent-filter#action:name:com.google.android.gms.wearable.CHANNEL_EVENT
-ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:100:13-102:29
+ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:104:13-106:29
 action#com.google.android.gms.wearable.CHANNEL_EVENT
-ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:101:17-88
+ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:105:17-88
 	android:name
-		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:101:25-85
+		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:105:25-85
 receiver#com.lnsgroup.elise.companion.EliseBootReceiver
-ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:106:9-112:20
+ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:110:9-116:20
 	android:exported
-		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:108:13-36
+		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:112:13-36
 	android:name
-		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:107:13-46
+		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:111:13-46
 intent-filter#action:name:android.intent.action.BOOT_COMPLETED
-ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:109:13-111:29
+ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:113:13-115:29
 action#android.intent.action.BOOT_COMPLETED
-ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:110:17-79
+ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:114:17-79
 	android:name
-		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:110:25-76
+		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:114:25-76
+receiver#com.lnsgroup.elise.companion.RoutineReceiver
+ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:119:9-121:40
+	android:exported
+		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:121:13-37
+	android:name
+		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:120:13-44
 meta-data#android.support.FILE_PROVIDER_PATHS
-ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:120:13-122:63
+ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:129:13-131:63
 	android:resource
-		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:122:17-60
+		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:131:17-60
 	android:name
-		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:121:17-67
+		ADDED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml:130:17-67
 uses-sdk
 INJECTED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml reason: use-sdk injection requested
 INJECTED from C:\Users\User\Desktop\Elise\elise-watch\phone\src\main\AndroidManifest.xml

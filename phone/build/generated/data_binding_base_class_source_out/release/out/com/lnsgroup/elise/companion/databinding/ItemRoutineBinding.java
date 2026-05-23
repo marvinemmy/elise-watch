@@ -21,6 +21,24 @@ public final class ItemRoutineBinding implements ViewBinding {
   private final LinearLayout rootView;
 
   @NonNull
+  public final TextView btnDelete;
+
+  @NonNull
+  public final TextView btnMore;
+
+  @NonNull
+  public final TextView btnPauseDay;
+
+  @NonNull
+  public final TextView btnPauseMonth;
+
+  @NonNull
+  public final TextView btnPauseWeek;
+
+  @NonNull
+  public final LinearLayout rowActions;
+
+  @NonNull
   public final Switch switchRoutine;
 
   @NonNull
@@ -29,9 +47,18 @@ public final class ItemRoutineBinding implements ViewBinding {
   @NonNull
   public final TextView tvRoutineMeta;
 
-  private ItemRoutineBinding(@NonNull LinearLayout rootView, @NonNull Switch switchRoutine,
-      @NonNull TextView tvRoutineDesc, @NonNull TextView tvRoutineMeta) {
+  private ItemRoutineBinding(@NonNull LinearLayout rootView, @NonNull TextView btnDelete,
+      @NonNull TextView btnMore, @NonNull TextView btnPauseDay, @NonNull TextView btnPauseMonth,
+      @NonNull TextView btnPauseWeek, @NonNull LinearLayout rowActions,
+      @NonNull Switch switchRoutine, @NonNull TextView tvRoutineDesc,
+      @NonNull TextView tvRoutineMeta) {
     this.rootView = rootView;
+    this.btnDelete = btnDelete;
+    this.btnMore = btnMore;
+    this.btnPauseDay = btnPauseDay;
+    this.btnPauseMonth = btnPauseMonth;
+    this.btnPauseWeek = btnPauseWeek;
+    this.rowActions = rowActions;
     this.switchRoutine = switchRoutine;
     this.tvRoutineDesc = tvRoutineDesc;
     this.tvRoutineMeta = tvRoutineMeta;
@@ -64,6 +91,42 @@ public final class ItemRoutineBinding implements ViewBinding {
     // This is done to optimize the compiled bytecode for size and performance.
     int id;
     missingId: {
+      id = R.id.btnDelete;
+      TextView btnDelete = ViewBindings.findChildViewById(rootView, id);
+      if (btnDelete == null) {
+        break missingId;
+      }
+
+      id = R.id.btnMore;
+      TextView btnMore = ViewBindings.findChildViewById(rootView, id);
+      if (btnMore == null) {
+        break missingId;
+      }
+
+      id = R.id.btnPauseDay;
+      TextView btnPauseDay = ViewBindings.findChildViewById(rootView, id);
+      if (btnPauseDay == null) {
+        break missingId;
+      }
+
+      id = R.id.btnPauseMonth;
+      TextView btnPauseMonth = ViewBindings.findChildViewById(rootView, id);
+      if (btnPauseMonth == null) {
+        break missingId;
+      }
+
+      id = R.id.btnPauseWeek;
+      TextView btnPauseWeek = ViewBindings.findChildViewById(rootView, id);
+      if (btnPauseWeek == null) {
+        break missingId;
+      }
+
+      id = R.id.rowActions;
+      LinearLayout rowActions = ViewBindings.findChildViewById(rootView, id);
+      if (rowActions == null) {
+        break missingId;
+      }
+
       id = R.id.switchRoutine;
       Switch switchRoutine = ViewBindings.findChildViewById(rootView, id);
       if (switchRoutine == null) {
@@ -82,8 +145,8 @@ public final class ItemRoutineBinding implements ViewBinding {
         break missingId;
       }
 
-      return new ItemRoutineBinding((LinearLayout) rootView, switchRoutine, tvRoutineDesc,
-          tvRoutineMeta);
+      return new ItemRoutineBinding((LinearLayout) rootView, btnDelete, btnMore, btnPauseDay,
+          btnPauseMonth, btnPauseWeek, rowActions, switchRoutine, tvRoutineDesc, tvRoutineMeta);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));

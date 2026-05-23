@@ -10,6 +10,10 @@
 
     <!-- Réseau -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Routines planifiées -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <!-- Micro + Audio -->
@@ -128,6 +132,11 @@
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
+
+        <!-- Routines planifiées -->
+        <receiver
+            android:name="com.lnsgroup.elise.companion.RoutineReceiver"
+            android:exported="false" />
 
         <!-- FileProvider (OTA install) -->
         <provider

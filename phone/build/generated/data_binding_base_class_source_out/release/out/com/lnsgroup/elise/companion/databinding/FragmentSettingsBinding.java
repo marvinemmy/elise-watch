@@ -5,6 +5,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ScrollView;
+import android.widget.Switch;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -23,7 +24,25 @@ public final class FragmentSettingsBinding implements ViewBinding {
   public final TextView btnCheckUpdate;
 
   @NonNull
+  public final TextView btnEditHome;
+
+  @NonNull
+  public final TextView btnEditWork;
+
+  @NonNull
+  public final TextView btnReschedule;
+
+  @NonNull
   public final TextView btnStopAll;
+
+  @NonNull
+  public final TextView btnTestMorning;
+
+  @NonNull
+  public final Switch switchVacation;
+
+  @NonNull
+  public final TextView tvHomeAddr;
 
   @NonNull
   public final TextView tvOtaStatus;
@@ -40,18 +59,31 @@ public final class FragmentSettingsBinding implements ViewBinding {
   @NonNull
   public final TextView tvVersionWatch;
 
+  @NonNull
+  public final TextView tvWorkAddr;
+
   private FragmentSettingsBinding(@NonNull ScrollView rootView, @NonNull TextView btnCheckUpdate,
-      @NonNull TextView btnStopAll, @NonNull TextView tvOtaStatus, @NonNull TextView tvRoutineCount,
-      @NonNull TextView tvVersionPhone, @NonNull TextView tvVersionServer,
-      @NonNull TextView tvVersionWatch) {
+      @NonNull TextView btnEditHome, @NonNull TextView btnEditWork, @NonNull TextView btnReschedule,
+      @NonNull TextView btnStopAll, @NonNull TextView btnTestMorning,
+      @NonNull Switch switchVacation, @NonNull TextView tvHomeAddr, @NonNull TextView tvOtaStatus,
+      @NonNull TextView tvRoutineCount, @NonNull TextView tvVersionPhone,
+      @NonNull TextView tvVersionServer, @NonNull TextView tvVersionWatch,
+      @NonNull TextView tvWorkAddr) {
     this.rootView = rootView;
     this.btnCheckUpdate = btnCheckUpdate;
+    this.btnEditHome = btnEditHome;
+    this.btnEditWork = btnEditWork;
+    this.btnReschedule = btnReschedule;
     this.btnStopAll = btnStopAll;
+    this.btnTestMorning = btnTestMorning;
+    this.switchVacation = switchVacation;
+    this.tvHomeAddr = tvHomeAddr;
     this.tvOtaStatus = tvOtaStatus;
     this.tvRoutineCount = tvRoutineCount;
     this.tvVersionPhone = tvVersionPhone;
     this.tvVersionServer = tvVersionServer;
     this.tvVersionWatch = tvVersionWatch;
+    this.tvWorkAddr = tvWorkAddr;
   }
 
   @Override
@@ -87,9 +119,45 @@ public final class FragmentSettingsBinding implements ViewBinding {
         break missingId;
       }
 
+      id = R.id.btnEditHome;
+      TextView btnEditHome = ViewBindings.findChildViewById(rootView, id);
+      if (btnEditHome == null) {
+        break missingId;
+      }
+
+      id = R.id.btnEditWork;
+      TextView btnEditWork = ViewBindings.findChildViewById(rootView, id);
+      if (btnEditWork == null) {
+        break missingId;
+      }
+
+      id = R.id.btnReschedule;
+      TextView btnReschedule = ViewBindings.findChildViewById(rootView, id);
+      if (btnReschedule == null) {
+        break missingId;
+      }
+
       id = R.id.btnStopAll;
       TextView btnStopAll = ViewBindings.findChildViewById(rootView, id);
       if (btnStopAll == null) {
+        break missingId;
+      }
+
+      id = R.id.btnTestMorning;
+      TextView btnTestMorning = ViewBindings.findChildViewById(rootView, id);
+      if (btnTestMorning == null) {
+        break missingId;
+      }
+
+      id = R.id.switchVacation;
+      Switch switchVacation = ViewBindings.findChildViewById(rootView, id);
+      if (switchVacation == null) {
+        break missingId;
+      }
+
+      id = R.id.tvHomeAddr;
+      TextView tvHomeAddr = ViewBindings.findChildViewById(rootView, id);
+      if (tvHomeAddr == null) {
         break missingId;
       }
 
@@ -123,8 +191,15 @@ public final class FragmentSettingsBinding implements ViewBinding {
         break missingId;
       }
 
-      return new FragmentSettingsBinding((ScrollView) rootView, btnCheckUpdate, btnStopAll,
-          tvOtaStatus, tvRoutineCount, tvVersionPhone, tvVersionServer, tvVersionWatch);
+      id = R.id.tvWorkAddr;
+      TextView tvWorkAddr = ViewBindings.findChildViewById(rootView, id);
+      if (tvWorkAddr == null) {
+        break missingId;
+      }
+
+      return new FragmentSettingsBinding((ScrollView) rootView, btnCheckUpdate, btnEditHome,
+          btnEditWork, btnReschedule, btnStopAll, btnTestMorning, switchVacation, tvHomeAddr,
+          tvOtaStatus, tvRoutineCount, tvVersionPhone, tvVersionServer, tvVersionWatch, tvWorkAddr);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));

@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>ÉLISE Watch — HUD Final</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  background:#000;min-height:100vh;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:28px;padding:36px 20px;font-family:'Courier New',monospace;
+}
+.top{color:#00E5FF;font-size:9px;letter-spacing:4px;opacity:.42;}
+.watches{display:flex;gap:50px;align-items:flex-start;flex-wrap:wrap;justify-content:center;}
+.wrap{display:flex;flex-direction:column;align-items:center;gap:9px;}
+canvas{border-radius:50%;display:block;}
+.slbl{font-size:8px;letter-spacing:2px;opacity:.35;text-align:center;}
+.controls{display:flex;gap:7px;flex-wrap:wrap;justify-content:center;}
+button{
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.10);
+  color:rgba(255,255,255,.4);font-family:'Courier New',monospace;font-size:7.5px;
+  letter-spacing:2px;padding:5px 13px;cursor:pointer;border-radius:2px;transition:all .2s;
+}
+button:hover{background:rgba(255,255,255,.1);color:#fff;}
+button.on{border-color:#00E5FF;color:#00E5FF;background:rgba(0,229,255,.08);}
+.legend{display:grid;grid-template-columns:repeat(4,1fr);gap:5px 20px;max-width:700px;}
+.li{display:flex;align-items:center;gap:6px;font-size:7px;letter-spacing:1px;color:rgba(255,255,255,.3);}
+.dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+</style>
+</head>
+<body>
+
+<div class="top">ÉLISE · WATCH HUD — 14 ARCS · TEXTE COURBE · COULEUR DYNAMIQUE</div>
+
+<div class="watches">
+  <div class="wrap">
+    <canvas id="c1" width="410" height="410"></canvas>
+    <div class="slbl" id="s1" style="color:#00E5FF">ÉTAT NORMAL · BON · 74</div>
+  </div>
+  <div class="wrap">
+    <canvas id="c2" width="410" height="410"></canvas>
+    <div class="slbl" id="s2" style="color:#FF2244">STRESS ÉLEVÉ · CRITIQUE · 22</div>
+  </div>
+</div>
+
+<div class="controls">
+  <button class="on"  onclick="setM('normal')">NORMAL</button>
+  <button             onclick="setM('stress')">STRESS</button>
+  <button             onclick="setM('optimal')">OPTIMAL</button>
+  <button             onclick="setM('night')">NUIT</button>
+  <button id="bA" class="on" onclick="togA()">⬤ ANIMÉ</button>
+</div>
+
+<div class="legend" id="legend"></div>
+
+<script>
+const SZ=410,CX=205,CY=205,R=197;
+const N=14,STEP=360/N,SWEEP=20;
+
+// ─── Live time/date ───────────────────────────────────────────────────────────
+const nd=new Date();
+const ts=`${String(nd.getHours()).padStart(2,'0')}:${String(nd.getMinutes()).padStart(2,'0')}`;
+const MN=['JAN','FÉV','MAR','AVR','MAI','JUN','JUL','AOÛ','SEP','OCT','NOV','DÉC'];
+const dateStr=`${nd.getDate()} ${MN[nd.getMonth()]}`;
+const dim=new Date(nd.getFullYear(),nd.getMonth()+1,0).getDate();
+const timeFill=(nd.getHours()*60+nd.getMinutes())/(24*60);
+const dateFill=nd.getDate()/dim;
+
+// ─── goodHigh: true=high fill is good(green), false=high fill bad(red), null=neutral(cyan)
+// ─── Metrics ─────────────────────────────────────────────────────────────────
+const MET=[
+  // i center  sub      goodHigh  normal              stress             optimal             night
+  {sub:'HEURE',  gh:null,
+   normal:{v:ts,      f:timeFill}, stress:{v:ts,      f:timeFill}, optimal:{v:ts,      f:timeFill}, night:{v:ts,      f:timeFill}},
+  {sub:'BPM',    gh:true,
+   normal:{v:'68♡',   f:1.00}, stress:{v:'104♡',  f:0.28}, optimal:{v:'61♡',   f:1.00}, night:{v:'54♡',  f:.92}},
+  {sub:'BATT',   gh:true,
+   normal:{v:'73%',   f:.73},  stress:{v:'41%',    f:.41},  optimal:{v:'91%',   f:.91},  night:{v:'68%',  f:.68}},
+  {sub:'NRG',    gh:true,
+   normal:{v:'82%',   f:.82},  stress:{v:'29%',    f:.29},  optimal:{v:'95%',   f:.95},  night:{v:'60%',  f:.60}},
+  {sub:'MÉTÉO',  gh:null,
+   normal:{v:'16°⛅', f:.48},  stress:{v:'16°⛅',  f:.48},  optimal:{v:'22°☀',  f:.68},  night:{v:'11°🌙',f:.32}},
+  {sub:'PAS',    gh:true,
+   normal:{v:'3200',  f:.40},  stress:{v:'400',    f:.05},  optimal:{v:'9300',  f:1.00}, night:{v:'7100', f:.89}},
+  {sub:'DATE',   gh:null,
+   normal:{v:dateStr, f:dateFill},stress:{v:dateStr,f:dateFill},optimal:{v:dateStr,f:dateFill},night:{v:dateStr,f:dateFill}},
+  {sub:'TRAV',   gh:null,
+   normal:{v:'2h15',  f:.28},  stress:{v:'5h50',   f:.73},  optimal:{v:'1h30',  f:.19},  night:{v:'7h40', f:.96}},
+  {sub:'MAILS',  gh:false,
+   normal:{v:'3✉',    f:.15},  stress:{v:'19✉',    f:.95},  optimal:{v:'0✉',    f:.02},  night:{v:'5✉',   f:.25}},
+  {sub:'CALME',  gh:true,
+   normal:{v:'74%',   f:.74},  stress:{v:'12%',    f:.12},  optimal:{v:'94%',   f:.94},  night:{v:'87%',  f:.87}},
+  {sub:'STRESS', gh:false,
+   normal:{v:'26%',   f:.26},  stress:{v:'88%',    f:.88},  optimal:{v:'6%',    f:.06},  night:{v:'18%',  f:.18}},
+  {sub:'SÉRÉN',  gh:true,
+   normal:{v:'88%',   f:.88},  stress:{v:'11%',    f:.11},  optimal:{v:'97%',   f:.97},  night:{v:'92%',  f:.92}},
+  {sub:'MÉM IA', gh:false,
+   normal:{v:'42%',   f:.42},  stress:{v:'78%',    f:.78},  optimal:{v:'31%',   f:.31},  night:{v:'55%',  f:.55}},
+  {sub:'RDV',    gh:true,
+   normal:{v:'15h00', f:.72},  stress:{v:'9h30',   f:.10},  optimal:{v:'Libre', f:.00},  night:{v:'8h30', f:.05}},
+];
+MET.forEach((m,i)=>{ m.center=(270+i*STEP+720)%360; });
+
+// ─── Mode configs ─────────────────────────────────────────────────────────────
+const MODES={
+  normal: {score:74, lbl:'BON',     col:'#00E5FF'},
+  stress: {score:22, lbl:'CRITIQUE',col:'#FF2244'},
+  optimal:{score:91, lbl:'OPTIMAL', col:'#00FF88'},
+  night:  {score:68, lbl:'MODÉRÉ',  col:'#FFDD00'},
+};
+const PAL={
+  normal: [[0xAA,0x44,0xFF],[0xFF,0x44,0xAA],[0x88,0x22,0x99]],
+  stress: [[0xFF,0x44,0x22],[0xFF,0x80,0x00],[0xCC,0x22,0x00]],
+  optimal:[[0x00,0xFF,0x88],[0x00,0xEE,0xFF],[0x00,0xCC,0x66]],
+  night:  [[0x22,0x44,0x88],[0x00,0x88,0xCC],[0x11,0x33,0x66]],
+};
+
+let mode='normal', anim=true;
+const sc=[{...MODES.normal},{...MODES.stress}];
+// Animated fills
+const aF1=MET.map(()=>0),aF2=MET.map(()=>0);
+
+function setM(m){
+  mode=m;sc[0]={...MODES[m]};
+  document.querySelectorAll('.controls button').forEach(b=>b.classList.remove('on'));
+  document.querySelector(`button[onclick="setM('${m}')"]`).classList.add('on');
+  document.getElementById('bA').classList.toggle('on',anim);
+  const cfg=MODES[m];
+  document.getElementById('s1').style.color=cfg.col;
+  document.getElementById('s1').textContent=`${m.toUpperCase()} · ${cfg.lbl} · ${cfg.score}`;
+}
+function togA(){
+  anim=!anim;
+  document.getElementById('bA').textContent=anim?'⬤ ANIMÉ':'○ PAUSE';
+  document.getElementById('bA').classList.toggle('on',anim);
+}
+
+// ─── Dynamic color: green→yellow→orange→red ───────────────────────────────────
+function dynColor(fill, gh){
+  if(gh===null) return '#00D4FF'; // neutral = cyan
+  const bad = gh ? (1-fill) : fill;   // 0=good(green), 1=bad(red)
+  const h = Math.round(120*(1-bad));  // hue: 120=green, 0=red
+  const l = bad>0.75 ? 55 : bad>0.50 ? 52 : 50;
+  return `hsl(${h},100%,${l}%)`;
+}
+// Track (background) = dimmed version
+function trackColor(fill, gh){
+  const c=dynColor(fill, gh);
+  return c.replace('hsl(','hsla(').replace(')',',0.12)');
+}
+
+// ─── Particles ────────────────────────────────────────────────────────────────
+function mkP(){return Array.from({length:60},(_,i)=>({a:Math.random()*Math.PI*2,r:i<9?Math.random()*.22+.06:Math.random()*.50+.26,z:Math.random()*2-1,sp:(Math.random()*.4+.1)*(Math.random()>.5?1:-1),sz:i<9?Math.random()*2.5+1.5:Math.random()*2+.5,wv:Math.random()*Math.PI*2,ci:i%3}));}
+const PP=[mkP(),mkP()];
+
+const d2r=d=>d*Math.PI/180;
+
+// ─── Curved text ──────────────────────────────────────────────────────────────
+// text follows the arc at radius r centered at centerDeg.
+// bottom half is flipped for readability.
+function arcText(ctx, text, cx, cy, r, centerDeg, size, color, alpha){
+  ctx.save();
+  ctx.font=`bold ${size}px 'Courier New'`;
+  ctx.textBaseline='middle';ctx.textAlign='center';
+  ctx.globalAlpha=alpha??1;
+
+  const cR=d2r(centerDeg);
+  const bot=Math.sin(cR)>0.001;
+  const chars=[...text];
+  const LS=0.5;
+  const cw=chars.map(c=>ctx.measureText(c).width+LS);
+  const totW=cw.reduce((s,w)=>s+w,0);
+  const totA=totW/r;
+
+  // Bottom half: reverse chars so text reads L→R from outside
+  const dc=bot?[...chars].reverse():chars;
+  const dw=bot?[...cw].reverse():cw;
+  let ang=bot?cR+totA/2:cR-totA/2;
+  const dir=bot?-1:1;
+
+  for(let i=0;i<dc.length;i++){
+    ang+=dir*dw[i]/(2*r);
+    const x=cx+Math.cos(ang)*r, y=cy+Math.sin(ang)*r;
+    ctx.save();
+    ctx.translate(x,y);
+    ctx.rotate(ang+(bot?-Math.PI/2:Math.PI/2));
+    ctx.shadowColor=color;ctx.shadowBlur=6;
+    ctx.fillStyle=color;
+    ctx.fillText(dc[i],0,0);
+    ctx.restore();
+    ang+=dir*dw[i]/(2*r);
+  }
+  ctx.restore();
+}
+
+// ─── Background ───────────────────────────────────────────────────────────────
+function drawBg(ctx,pal){
+  ctx.fillStyle='#010A10';ctx.beginPath();ctx.arc(CX,CY,R,0,Math.PI*2);ctx.fill();
+  ctx.save();ctx.beginPath();ctx.arc(CX,CY,R,0,Math.PI*2);ctx.clip();
+  const[pr,pg,pb]=pal[0];ctx.strokeStyle=`rgba(${pr},${pg},${pb},.05)`;ctx.lineWidth=.7;
+  const H=CY*.55;
+  for(let i=0;i<=7;i++){const t=i/7,y=H+(SZ-H)*t*t;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(SZ,y);ctx.stroke();}
+  for(let i=-4;i<=4;i++){const x=CX+i*(SZ/8);ctx.beginPath();ctx.moveTo(x,H);ctx.lineTo(CX+i*SZ*1.5,SZ);ctx.stroke();}
+  ctx.restore();
+}
+function drawPts(ctx,ps,t,pal,spd){
+  for(const p of ps){if(anim)p.a+=p.sp*.016*spd;const wr=p.r+Math.sin(t*2.1+p.wv)*.04;const rr=wr*(SZ*.44);const zF=(p.z+1)/2,proj=.5+zF*.5,al=.25+zF*.75;const x=CX+Math.cos(p.a)*rr,y=CY+Math.sin(p.a)*rr*.65;const[cr,cg,cb]=pal[p.ci%pal.length];ctx.beginPath();ctx.arc(x,y,p.sz*proj*3,0,Math.PI*2);ctx.fillStyle=`rgba(${cr},${cg},${cb},${al*.09})`;ctx.fill();ctx.beginPath();ctx.arc(x,y,p.sz*proj,0,Math.PI*2);ctx.fillStyle=`rgba(${cr},${cg},${cb},${al})`;ctx.fill();}
+}
+function drawOrb(ctx,t,pal){
+  const pulse=1+(anim?Math.sin(t*3.5)*.08:0);const oR=SZ*.106*pulse;const[pr,pg,pb]=pal[0];
+  for(let l=4;l>=1;l--){ctx.beginPath();ctx.arc(CX,CY,oR*(1+l*.55),0,Math.PI*2);ctx.fillStyle=`rgba(${pr},${pg},${pb},${Math.max(50/l,5)/255})`;ctx.fill();}
+  const g=ctx.createRadialGradient(CX,CY,0,CX,CY,oR);g.addColorStop(0,'rgba(255,255,255,.9)');g.addColorStop(.55,`rgba(${pr},${pg},${pb},.8)`);g.addColorStop(1,'transparent');
+  ctx.beginPath();ctx.arc(CX,CY,oR,0,Math.PI*2);ctx.fillStyle=g;ctx.fill();
+  ctx.beginPath();ctx.arc(CX,CY,oR*1.22,0,Math.PI*2);ctx.strokeStyle=`rgba(${pr},${pg},${pb},.5)`;ctx.lineWidth=1.2;ctx.stroke();
+}
+
+// ─── Main HUD ─────────────────────────────────────────────────────────────────
+function drawHud(ctx, af, md){
+  const arcR=R-5, SW=7;
+  const rVal=R-19;   // value text radius
+  const rSub=R-31;   // sublabel text radius
+
+  for(let i=0;i<MET.length;i++){
+    const m=MET[i];
+    const dat=m[md]??m.normal;
+    const fill=Math.max(0,Math.min(1,af[i]));
+    const col=dynColor(fill, m.gh);
+    const trkCol=trackColor(fill, m.gh);
+
+    const sd=d2r(m.center-SWEEP/2), ed=d2r(m.center+SWEEP/2);
+    const fd=d2r(m.center-SWEEP/2+SWEEP*fill);
+
+    // Background track
+    ctx.beginPath();ctx.arc(CX,CY,arcR,sd,ed);
+    ctx.strokeStyle=trkCol;ctx.lineWidth=SW;ctx.lineCap='round';ctx.stroke();
+
+    // Glow
+    if(fill>.01){
+      ctx.save();ctx.shadowColor=col;ctx.shadowBlur=12;
+      ctx.beginPath();ctx.arc(CX,CY,arcR,sd,fd);
+      ctx.strokeStyle=col.replace('hsl(','hsla(').replace(')',',0.3)');
+      ctx.lineWidth=SW*1.9;ctx.lineCap='round';ctx.stroke();
+      ctx.restore();
+      // Fill
+      ctx.beginPath();ctx.arc(CX,CY,arcR,sd,fd);
+      ctx.strokeStyle=col;ctx.lineWidth=SW;ctx.lineCap='round';ctx.stroke();
+    }
+
+    // Curved text: value (outer)
+    arcText(ctx, dat.v, CX,CY, rVal, m.center, 8.5, col, 1.0);
+    // Curved text: sublabel (inner, dimmer)
+    arcText(ctx, m.sub, CX,CY, rSub, m.center, 5.5, col, 0.42);
+  }
+}
+
+function drawScore(ctx,sc2){
+  const sy=CY+R*.43;
+  ctx.save();ctx.shadowColor=sc2.col;ctx.shadowBlur=22;
+  ctx.fillStyle=sc2.col;ctx.font=`bold 20px 'Courier New'`;
+  ctx.textAlign='center';ctx.textBaseline='alphabetic';
+  ctx.fillText(sc2.score,CX,sy);ctx.restore();
+  ctx.fillStyle='rgba(255,255,255,.32)';ctx.font=`7px 'Courier New'`;
+  ctx.textAlign='center';ctx.textBaseline='alphabetic';
+  ctx.fillText(sc2.lbl,CX,sy+11);
+}
+function drawBezel(ctx){
+  ctx.beginPath();ctx.arc(CX,CY,R,0,Math.PI*2);
+  ctx.strokeStyle='rgba(0,229,255,.04)';ctx.lineWidth=1;ctx.stroke();
+  ctx.beginPath();ctx.arc(CX,CY,R-36,0,Math.PI*2);
+  ctx.strokeStyle='rgba(0,229,255,.015)';ctx.lineWidth=.5;ctx.stroke();
+}
+
+// ─── Render loop ──────────────────────────────────────────────────────────────
+const ctxs=[document.getElementById('c1').getContext('2d'),document.getElementById('c2').getContext('2d')];
+const t0=performance.now(); let T=0;
+
+function frame(now){
+  if(anim)T=(now-t0)/1000;
+  const lp=Math.min(T/2.2,1);
+
+  for(let i=0;i<MET.length;i++){
+    const t1=(MET[i][mode]?.f??MET[i].normal.f)*lp;
+    const t2=(MET[i].stress?.f??MET[i].normal.f)*lp;
+    aF1[i]+=(t1-aF1[i])*.07;
+    aF2[i]+=(t2-aF2[i])*.09;
+  }
+
+  [0,1].forEach(ci=>{
+    const ctx=ctxs[ci],af=ci?aF2:aF1,md=ci?'stress':mode;
+    const pal=PAL[ci?'stress':mode]||PAL.normal;
+    const spd={normal:.18,stress:.5,optimal:.25,night:.10}[md]||.18;
+    ctx.clearRect(0,0,SZ,SZ);
+    ctx.save();ctx.beginPath();ctx.arc(CX,CY,R,0,Math.PI*2);ctx.clip();
+    drawBg(ctx,pal);drawPts(ctx,PP[ci],T,pal,spd);drawOrb(ctx,T*(ci?0.9:1),pal);
+    drawHud(ctx,af,md);drawScore(ctx,sc[ci]);drawBezel(ctx);
+    ctx.restore();
+  });
+
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+// Live time
+setInterval(()=>{const n=new Date(),t2=`${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}`;['normal','stress','optimal','night'].forEach(k=>MET[0][k].v=t2);},30000);
+
+// Legend
+const leg=document.getElementById('legend');
+MET.forEach(m=>{
+  const d=document.createElement('div');d.className='li';
+  d.innerHTML=`<div class="dot" style="background:hsl(60,100%,52%)"></div>${m.sub} — ${m.normal.v}`;
+  leg.appendChild(d);
+});
+</script>
+</body>
+</html>

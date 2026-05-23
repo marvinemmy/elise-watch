@@ -1,15 +1,23 @@
 [
     {
+        "merged": "com.lnsgroup.elise.companion.phone-mergeReleaseResources-46:/layout/fragment_settings.xml",
+        "source": "com.lnsgroup.elise.companion.phone-main-48:/layout/fragment_settings.xml"
+    },
+    {
         "merged": "C:\\Users\\User\\.gradle\\daemon\\8.4\\com.lnsgroup.elise.companion.phone-mergeReleaseResources-46:\\layout\\fragment_voice.xml",
         "source": "C:\\Users\\User\\.gradle\\daemon\\8.4\\com.lnsgroup.elise.companion.phone-main-48:\\layout\\fragment_voice.xml"
     },
     {
-        "merged": "C:\\Users\\User\\.gradle\\daemon\\8.4\\com.lnsgroup.elise.companion.phone-mergeReleaseResources-46:\\layout\\fragment_history.xml",
-        "source": "C:\\Users\\User\\.gradle\\daemon\\8.4\\com.lnsgroup.elise.companion.phone-main-48:\\layout\\fragment_history.xml"
+        "merged": "C:\\Users\\User\\.gradle\\daemon\\8.4\\com.lnsgroup.elise.companion.phone-mergeReleaseResources-46:\\layout\\item_trigger.xml",
+        "source": "C:\\Users\\User\\.gradle\\daemon\\8.4\\com.lnsgroup.elise.companion.phone-main-48:\\layout\\item_trigger.xml"
     },
     {
-        "merged": "com.lnsgroup.elise.companion.phone-mergeReleaseResources-46:/layout/activity_main.xml",
-        "source": "com.lnsgroup.elise.companion.phone-main-48:/layout/activity_main.xml"
+        "merged": "C:\\Users\\User\\.gradle\\daemon\\8.4\\com.lnsgroup.elise.companion.phone-mergeReleaseResources-46:\\layout\\dialog_add_routine.xml",
+        "source": "C:\\Users\\User\\.gradle\\daemon\\8.4\\com.lnsgroup.elise.companion.phone-main-48:\\layout\\dialog_add_routine.xml"
+    },
+    {
+        "merged": "C:\\Users\\User\\.gradle\\daemon\\8.4\\com.lnsgroup.elise.companion.phone-mergeReleaseResources-46:\\layout\\fragment_history.xml",
+        "source": "C:\\Users\\User\\.gradle\\daemon\\8.4\\com.lnsgroup.elise.companion.phone-main-48:\\layout\\fragment_history.xml"
     },
     {
         "merged": "C:\\Users\\User\\.gradle\\daemon\\8.4\\com.lnsgroup.elise.companion.phone-mergeReleaseResources-46:\\layout\\fragment_routines.xml",
@@ -30,5 +38,9 @@
     {
         "merged": "C:\\Users\\User\\.gradle\\daemon\\8.4\\com.lnsgroup.elise.companion.phone-mergeReleaseResources-46:\\layout\\item_history.xml",
         "source": "C:\\Users\\User\\.gradle\\daemon\\8.4\\com.lnsgroup.elise.companion.phone-main-48:\\layout\\item_history.xml"
+    },
+    {
+        "merged": "C:\\Users\\User\\.gradle\\daemon\\8.4\\com.lnsgroup.elise.companion.phone-mergeReleaseResources-46:\\layout\\dialog_add_trigger.xml",
+        "source": "C:\\Users\\User\\.gradle\\daemon\\8.4\\com.lnsgroup.elise.companion.phone-main-48:\\layout\\dialog_add_trigger.xml"
     }
 ]

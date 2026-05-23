@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>ÉLISE Watch — Preview</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#000;min-height:100vh;display:flex;flex-direction:column;align-items:center;
+  gap:30px;padding:48px 20px 60px;font-family:'Courier New',monospace;color:#fff;}
+.top{font-size:8.5px;letter-spacing:4px;color:rgba(0,229,255,.38);}
+.gallery{display:flex;flex-wrap:wrap;gap:24px;justify-content:center;align-items:flex-start;}
+.wrap{display:flex;flex-direction:column;align-items:center;gap:10px;position:relative;}
+canvas{display:block;border-radius:50%;}
+.wlabel{font-size:8px;letter-spacing:3px;text-align:center;}
+.wstate{font-size:6.5px;letter-spacing:1.5px;opacity:.25;text-align:center;margin-top:-4px;}
+</style>
+</head>
+<body>
+
+<div class="top">ÉLISE · WATCH — ANIMATION ORBITALE · 5 ÉTATS</div>
+<div class="gallery" id="gallery"></div>
+
+<script>
+const SZ=300, CX=SZ/2, CY=SZ/2, R=SZ/2-2;
+
+// ─── États ────────────────────────────────────────────────────────────────────
+const STATES={
+  wait:    {hex:'#c084fc',r:192,g:132,b:252, arcs:3,speed:0.4, expand:0.55,pulse:0.10, lbl:'ATTENTE'},
+  listen:  {hex:'#22d3ee',r: 34,g:211,b:238, arcs:5,speed:1.2, expand:0.95,pulse:0.30, lbl:'ÉCOUTE'},
+  think:   {hex:'#fb923c',r:251,g:146,b: 60, arcs:4,speed:0.8, expand:0.75,pulse:0.20, lbl:'RÉFLEXION'},
+  respond: {hex:'#facc15',r:250,g:204,b: 21, arcs:4,speed:1.0, expand:0.85,pulse:0.22, lbl:'RÉPONSE'},
+  error:   {hex:'#ef4444',r:239,g: 68,b: 68, arcs:2,speed:1.5, expand:0.50,pulse:0.35, lbl:'ERREUR'},
+};
+const KEYS=['wait','listen','think','respond','error'];
+
+function rgba(r,g,b,a){return`rgba(${Math.round(r)},${Math.round(g)},${Math.round(b)},${a})`;}
+
+// ─── Dessin d'un arc orb ──────────────────────────────────────────────────────
+function drawOrb(ctx, T, key, lc){
+  const s=STATES[key], baseR=SZ*.36, n=s.arcs;
+  for(let i=0;i<n;i++){
+    const frac=i/n;
+    const thick=(2.5-frac*1.0)*(SZ/190);
+    const opacity=0.9-frac*.35;
+    const phase=frac*Math.PI*2;
+    const span=Math.PI*(1.1-frac*.2);
+    const rSpd=s.speed*(1+frac*.4)*(i%2===0?1:-1);
+    const pulse=s.pulse*Math.sin(T*s.speed*2.2+phase);
+    const r=baseR*(0.22+frac*.18)*7.5*(s.expand+pulse);
+    const ang=T*rSpd+phase;
+    const sa=ang-span/2, ea=ang+span/2;
+
+    // Passe halo flou
+    ctx.save();
+    ctx.globalAlpha=opacity*.38;
+    ctx.beginPath();ctx.arc(CX,CY,r,sa,ea);
+    ctx.strokeStyle=rgba(lc.r,lc.g,lc.b,1);
+    ctx.lineWidth=thick*4;ctx.lineCap='round';
+    ctx.filter=`blur(${(thick*1.5).toFixed(1)}px)`;
+    ctx.stroke();ctx.restore();
+
+    // Passe nette dégradé transparent→couleur→transparent
+    const x0=CX+r*Math.cos(sa),y0=CY+r*Math.sin(sa);
+    const x1=CX+r*Math.cos(ea),y1=CY+r*Math.sin(ea);
+    const gr=ctx.createLinearGradient(x0,y0,x1,y1);
+    gr.addColorStop(0,  rgba(lc.r,lc.g,lc.b,0));
+    gr.addColorStop(.5, rgba(lc.r,lc.g,lc.b,opacity));
+    gr.addColorStop(1,  rgba(lc.r,lc.g,lc.b,0));
+    ctx.save();
+    ctx.beginPath();ctx.arc(CX,CY,r,sa,ea);
+    ctx.strokeStyle=gr;ctx.lineWidth=thick;ctx.lineCap='round';
+    ctx.stroke();ctx.restore();
+  }
+}
+
+// ─── Dessin d'une montre complète ─────────────────────────────────────────────
+function drawWatch(ctx, T, key, lc){
+  ctx.clearRect(0,0,SZ,SZ);
+  ctx.save();
+  ctx.beginPath();ctx.arc(CX,CY,R,0,Math.PI*2);ctx.clip();
+
+  // Fond AMOLED
+  ctx.fillStyle='#0A0A0F';ctx.fillRect(0,0,SZ,SZ);
+
+  // Halo ambiant central (7% opacité)
+  const ag=ctx.createRadialGradient(CX,CY,0,CX,CY,R*.65);
+  ag.addColorStop(0,rgba(lc.r,lc.g,lc.b,.08));
+  ag.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=ag;ctx.fillRect(0,0,SZ,SZ);
+
+  // Grille perspective subtile
+  ctx.strokeStyle=rgba(lc.r,lc.g,lc.b,.04);ctx.lineWidth=.6;
+  const h=CY*.6;
+  for(let i=0;i<=6;i++){const t=i/6,y=h+(SZ-h)*t*t;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(SZ,y);ctx.stroke();}
+  for(let i=-3;i<=3;i++){const x=CX+i*(SZ/7);ctx.beginPath();ctx.moveTo(x,h);ctx.lineTo(CX+i*SZ*1.5,SZ);ctx.stroke();}
+
+  // Arcs orbitaux
+  drawOrb(ctx,T,key,lc);
+
+  ctx.restore();
+
+  // Anneau de cadran
+  ctx.beginPath();ctx.arc(CX,CY,R,0,Math.PI*2);
+  ctx.strokeStyle='rgba(0,229,255,.05)';ctx.lineWidth=1;ctx.stroke();
+  ctx.beginPath();ctx.arc(CX,CY,R-SZ*.075,0,Math.PI*2);
+  ctx.strokeStyle='rgba(0,229,255,.02)';ctx.lineWidth=.5;ctx.stroke();
+}
+
+// ─── Construction de la galerie ───────────────────────────────────────────────
+const gallery=document.getElementById('gallery');
+const ctxs=[], lerpCs=[];
+
+KEYS.forEach(k=>{
+  const s=STATES[k];
+  const wrap=document.createElement('div');wrap.className='wrap';
+
+  // Shell montre
+  const shell=document.createElement('div');
+  shell.style.cssText=`position:relative;width:${SZ}px;height:${SZ}px;`;
+  const cv=document.createElement('canvas');cv.width=SZ;cv.height=SZ;
+  cv.style.cssText=`position:absolute;top:0;left:0;border-radius:50%;`;
+  const crown=document.createElement('div');
+  crown.style.cssText=`position:absolute;right:-7px;top:50%;transform:translateY(-50%);
+    width:7px;height:30px;background:linear-gradient(90deg,#181820,#252532);
+    border-radius:3px;border:1px solid #2e2e40;`;
+  shell.appendChild(cv);shell.appendChild(crown);
+
+  const lbl=document.createElement('div');
+  lbl.className='wlabel';lbl.style.color=s.hex;lbl.textContent=s.lbl;
+  const sub=document.createElement('div');sub.className='wstate';
+  sub.textContent=`${s.arcs} ARCS · VITESSE ${s.speed}`;
+
+  wrap.appendChild(shell);wrap.appendChild(lbl);wrap.appendChild(sub);
+  gallery.appendChild(wrap);
+
+  ctxs.push(cv.getContext('2d'));
+  lerpCs.push({r:s.r,g:s.g,b:s.b});
+});
+
+// ─── Boucle d'animation ───────────────────────────────────────────────────────
+const t0=performance.now();
+function frame(now){
+  const T=(now-t0)/1000;
+  for(let i=0;i<KEYS.length;i++){
+    drawWatch(ctxs[i],T,KEYS[i],lerpCs[i]);
+  }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

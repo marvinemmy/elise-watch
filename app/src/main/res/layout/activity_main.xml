@@ -10,10 +10,5 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-    <!-- Overlay HUD : arcs santé sur le contour circulaire, transparent -->
-    <com.lnsgroup.elise.watch.ui.HudArcView
-        android:id="@+id/hudArcView"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
 
 </FrameLayout>
