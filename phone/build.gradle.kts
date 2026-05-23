@@ -79,8 +79,9 @@ dependencies {
     implementation("androidx.camera:camera-lifecycle:1.3.4")
     implementation("androidx.camera:camera-view:1.3.4")
 
-    // ML Kit — reconnaissance faciale
+    // ML Kit — reconnaissance faciale + scan QR WiFi
     implementation("com.google.mlkit:face-detection:16.1.6")
+    implementation("com.google.mlkit:barcode-scanning:17.3.0")
 
     // Google Sign-In + APIs
     implementation("com.google.android.gms:play-services-auth:21.2.0")

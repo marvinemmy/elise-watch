@@ -7,7 +7,12 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
+import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
+import com.google.mlkit.vision.barcode.BarcodeScanning
+import com.google.mlkit.vision.barcode.common.Barcode
+import com.google.mlkit.vision.common.InputImage
 import com.lnsgroup.elise.companion.databinding.FragmentSettingsBinding
 import kotlinx.coroutines.*
 import okhttp3.OkHttpClient
@@ -52,6 +57,7 @@ class SettingsFragment : Fragment() {
         setupVariables()
         loadServerStatus()
         checkOtaStatus()
+        setupWifiSync()
     }
 
     private fun loadServerStatus() {
@@ -135,6 +141,72 @@ class SettingsFragment : Fragment() {
                 "Dernière version poussée à la montre : v1.0.$lastPushed\nOuvre l'app pour mettre à jour automatiquement."
             else
                 "Première fois — connecte la montre via Bluetooth et lance l'app."
+        }
+    }
+
+    // ── WiFi Sync ─────────────────────────────────────────────────────────────
+
+    private val pickImage = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        uri ?: return@registerForActivityResult
+        try {
+            val image = InputImage.fromFilePath(requireContext(), uri)
+            BarcodeScanning.getClient().process(image)
+                .addOnSuccessListener { barcodes ->
+                    val qr = barcodes.firstOrNull { it.format == Barcode.FORMAT_QR_CODE }
+                    val raw = qr?.rawValue ?: run {
+                        Toast.makeText(context, "Aucun QR WiFi trouvé", Toast.LENGTH_SHORT).show()
+                        return@addOnSuccessListener
+                    }
+                    val parsed = WifiSyncManager.parseWifiQr(raw) ?: run {
+                        Toast.makeText(context, "QR non reconnu (format WIFI:...)", Toast.LENGTH_SHORT).show()
+                        return@addOnSuccessListener
+                    }
+                    val (ssid, password, type) = parsed
+                    binding.tvWifiSsid.text = ssid
+                    binding.etWifiPassword.setText(password)
+                    WifiSyncManager.saveNetwork(requireContext(), ssid, password, type)
+                    pushWifiToWatch(ssid, password, type)
+                }
+                .addOnFailureListener {
+                    Toast.makeText(context, "Erreur lecture QR: ${it.message}", Toast.LENGTH_SHORT).show()
+                }
+        } catch (e: Exception) {
+            Toast.makeText(context, "Erreur: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun setupWifiSync() {
+        val ctx = requireContext()
+        val currentSsid = WifiSyncManager.getCurrentSsid(ctx)
+        binding.tvWifiSsid.text = currentSsid ?: "Non connecté"
+        if (currentSsid != null) {
+            val saved = WifiSyncManager.getSavedPassword(ctx, currentSsid)
+            if (saved != null) binding.etWifiPassword.setText(saved)
+        }
+
+        binding.btnWifiSync.setOnClickListener {
+            val ssid = binding.tvWifiSsid.text.toString().trim()
+            val pwd = binding.etWifiPassword.text.toString().trim()
+            if (ssid.isBlank() || ssid == "Non connecté") {
+                Toast.makeText(ctx, "Pas de réseau WiFi actif", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            WifiSyncManager.saveNetwork(ctx, ssid, pwd)
+            pushWifiToWatch(ssid, pwd)
+        }
+
+        binding.btnWifiQr.setOnClickListener {
+            pickImage.launch("image/*")
+        }
+    }
+
+    private fun pushWifiToWatch(ssid: String, password: String, type: String = "WPA") {
+        scope.launch {
+            val ok = WifiSyncManager.pushToWatch(requireContext(), ssid, password, type)
+            withContext(Dispatchers.Main) {
+                val msg = if (ok) "WiFi envoyé à la montre ✓" else "Montre non connectée"
+                Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+            }
         }
     }
 

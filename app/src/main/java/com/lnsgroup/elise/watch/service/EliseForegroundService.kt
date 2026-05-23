@@ -201,12 +201,9 @@ class EliseForegroundService : Service() {
 
     private fun startProcessingVibration() {
         vibJob?.cancel()
-        vibJob = scope.launch {
-            while (isActive) {
-                vibrateOnce(Config.VIB_PROCESSING_PULSE)
-                delay(Config.VIB_PROCESSING_INTERVAL)
-            }
-        }
+        // Single short pulse to confirm processing started — no repetition
+        vibrateOnce(Config.VIB_PROCESSING_PULSE)
+        vibJob = null
     }
 
     private fun stopProcessingVibration() { vibJob?.cancel(); vibJob = null }
