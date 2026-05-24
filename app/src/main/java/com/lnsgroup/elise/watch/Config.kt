@@ -18,8 +18,9 @@ object Config {
     const val BUFFER_SECONDS = 0.1f   // taille du buffer d'entrée
 
     // Détection silence (arrêt enregistrement)
-    const val SILENCE_THRESHOLD_RMS = 300     // amplitude RMS en dessous = silence
-    const val SILENCE_DURATION_MS   = 300L    // 300ms silence = fin de phrase (réduit de 600ms pour vitesse)
+    // Réglage conservateur pour micro montre (sensibilité plus faible qu'un téléphone)
+    const val SILENCE_THRESHOLD_RMS = 200     // en dessous = silence (abaissé pour environnements calmes)
+    const val SILENCE_DURATION_MS   = 600L    // 600ms silence = fin de phrase (augmenté pour éviter les coupures)
     const val MAX_RECORD_MS         = 12_000L // sécurité : max 12 secondes
 
     // Wake word TFLite
@@ -33,15 +34,20 @@ object Config {
     const val VIB_PROCESSING_INTERVAL = 900L  // intervalle entre pulses
 
     // VAD — déclenchement enregistrement par voix dans état LISTENING
-    const val VAD_THRESHOLD_RMS  = 2000f   // amplitude min pour détecter la parole (voix forte uniquement)
-    const val VAD_TRIGGER_MS     = 200L    // durée parole continue avant déclenchement
+    // Abaissé pour micro montre (distance ~20cm, sensibilité réduite vs téléphone)
+    const val VAD_THRESHOLD_RMS  = 900f    // était 2000 — voix normale à 20cm dépasse 900 RMS
+    const val VAD_TRIGGER_MS     = 150L    // 150ms de voix continue déclenche l'enregistrement
 
     // VAD — interruption pendant SPEAKING (seuil plus haut pour ignorer le haut-parleur)
-    const val VAD_INTERRUPT_RMS  = 3500f   // plus élevé pour éviter les faux positifs du speaker
+    const val VAD_INTERRUPT_RMS  = 2200f   // ajusté proportionnellement au nouveau VAD_THRESHOLD
     const val VAD_INTERRUPT_MS   = 250L    // 250ms de voix = interruption confirmée
 
     // Silence → retour WAITING depuis LISTENING
-    const val SILENCE_TO_WAIT_MS = 3000L
+    const val SILENCE_TO_WAIT_MS = 10_000L  // 10s d'écoute après réponse avant retour WAITING
+
+    // ── Diagnostic micro ──────────────────────────────────────────────────────
+    // Activer pour logger le RMS en continu et calibrer les seuils
+    const val MIC_DIAGNOSTIC_MODE = false
 
     // Mots/phrases de désactivation vocale (transcript Whisper normalisé lowercase, trim ponctuation fin)
     // Inclus avec et sans virgule pour couvrir les variantes de transcription Whisper
@@ -74,6 +80,16 @@ object Config {
         "stop", "arrête", "arrêtes", "arrêter", "annule", "annuler",
         "silence", "tais-toi", "tais toi", "ça suffit", "ca suffit",
         "au revoir", "bonne nuit",
+    )
+
+    // Wake phrase "Daddy's home" — detection périodique en état WAITING
+    const val WAKE_PHRASE_CHECK_INTERVAL_MS = 3000L   // toutes les 3s
+    const val WAKE_PHRASE_SAMPLE_MS         = 600      // 600ms d'audio
+    const val WAKE_PHRASE_MIN_RMS           = 400f     // seuil d'énergie minimum
+    val WAKE_PHRASES = setOf(
+        "daddy's home", "daddys home", "daddy home",
+        "wake up daddy's home", "wake up daddy",
+        "daddy est là", "daddy est arrivé",
     )
 
     // Préférences

@@ -12,7 +12,6 @@ import androidx.core.app.NotificationCompat
 import com.lnsgroup.elise.watch.Config
 import com.lnsgroup.elise.watch.audio.AudioCapture
 import com.lnsgroup.elise.watch.audio.AudioPlayer
-import com.lnsgroup.elise.watch.audio.WakeWordDetector
 import com.lnsgroup.elise.watch.health.HealthDataCollector
 import com.lnsgroup.elise.watch.media.MusicController
 import com.lnsgroup.elise.watch.network.EliseWebSocket
@@ -21,7 +20,8 @@ import kotlinx.coroutines.*
 import java.util.concurrent.atomic.AtomicBoolean
 
 private const val TAG = "EliseForegroundService"
-private const val NOTIF_CHANNEL_ID = "elise_listening"
+private const val NOTIF_CHANNEL_ID        = "elise_listening"
+private const val NOTIF_CHANNEL_EVENTS_ID = "elise_events"
 private const val NOTIF_ID = 1
 
 class EliseForegroundService : Service() {
@@ -30,7 +30,6 @@ class EliseForegroundService : Service() {
     private var listeningJob: Job? = null
     private lateinit var audioCapture: AudioCapture
     private lateinit var audioPlayer: AudioPlayer
-    private lateinit var wakeWordDetector: WakeWordDetector
     private lateinit var healthCollector: HealthDataCollector
     private lateinit var musicController: MusicController
 
@@ -83,10 +82,9 @@ class EliseForegroundService : Service() {
     override fun onCreate() {
         super.onCreate()
         createNotificationChannel()
-        audioCapture     = AudioCapture()
-        audioPlayer      = AudioPlayer(cacheDir)
-        wakeWordDetector = WakeWordDetector(this)
-        healthCollector  = HealthDataCollector(this)
+        audioCapture    = AudioCapture()
+        audioPlayer     = AudioPlayer(cacheDir)
+        healthCollector = HealthDataCollector(this)
         musicController  = MusicController(this)
         healthCollector.start()
 
@@ -106,6 +104,75 @@ class EliseForegroundService : Service() {
 
         // Battery level monitoring
         registerReceiver(batteryReceiver, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+
+        // Push notifications depuis le serveur (gap fixes, alertes)
+        startEventListener()
+    }
+
+    // ── Event listener — push notifications serveur → montre ──────────────────
+
+    private val eventHttpClient = okhttp3.OkHttpClient.Builder()
+        .connectTimeout(15, java.util.concurrent.TimeUnit.SECONDS)
+        .readTimeout(0, java.util.concurrent.TimeUnit.MILLISECONDS)
+        .pingInterval(20, java.util.concurrent.TimeUnit.SECONDS)
+        .build()
+
+    private fun startEventListener() {
+        scope.launch(Dispatchers.IO) {
+            while (isActive) {
+                try {
+                    val token = Config.PRELOADED_TOKEN
+                    val url   = "${Config.API_BASE_URL.replace("https://", "wss://")}/ws/events?token=$token"
+                    val req   = okhttp3.Request.Builder().url(url).build()
+                    val latch = java.util.concurrent.CountDownLatch(1)
+                    eventHttpClient.newWebSocket(req, object : okhttp3.WebSocketListener() {
+                        override fun onMessage(ws: okhttp3.WebSocket, text: String) {
+                            try {
+                                val json = org.json.JSONObject(text)
+                                if (json.optString("type") == "notification") {
+                                    showWatchNotification(
+                                        json.optString("title", "Élise"),
+                                        json.optString("body", ""),
+                                    )
+                                }
+                            } catch (_: Exception) {}
+                        }
+                        override fun onFailure(ws: okhttp3.WebSocket, t: Throwable, r: okhttp3.Response?) {
+                            latch.countDown()
+                        }
+                        override fun onClosed(ws: okhttp3.WebSocket, code: Int, reason: String) {
+                            latch.countDown()
+                        }
+                    })
+                    latch.await()
+                } catch (e: Exception) {
+                    Log.w(TAG, "Event WS error: ${e.message}")
+                }
+                delay(5_000)
+            }
+        }
+    }
+
+    private fun showWatchNotification(title: String, body: String) {
+        val nm = getSystemService(NotificationManager::class.java)
+        val notif = NotificationCompat.Builder(this, NOTIF_CHANNEL_EVENTS_ID)
+            .setSmallIcon(com.lnsgroup.elise.watch.R.drawable.ic_elise)
+            .setContentTitle(title)
+            .setContentText(body)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(body))
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true)
+            .build()
+        nm.notify(System.currentTimeMillis().toInt(), notif)
+        // Annoncer vocalement si important
+        if (title.contains("compétence", ignoreCase = true) ||
+            title.contains("capacité", ignoreCase = true)) {
+            tts?.speak(
+                "Nouvelle compétence acquise : $body".take(120),
+                android.speech.tts.TextToSpeech.QUEUE_ADD, null, "gap_fix"
+            )
+        }
+        Log.i(TAG, "Watch notification: $title")
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -129,7 +196,6 @@ class EliseForegroundService : Service() {
         audioCapture.stop()
         audioPlayer.cleanup()
         healthCollector.stop()
-        wakeWordDetector.close()
         scope.cancel()
         try { unregisterReceiver(batteryReceiver) } catch (_: Exception) {}
         tts?.shutdown(); tts = null
@@ -137,6 +203,68 @@ class EliseForegroundService : Service() {
     }
 
     // ── Boucle principale ──────────────────────────────────────────────────────
+
+    private var lastWakePhraseCheckMs = 0L
+
+    /** Prend un échantillon audio court, vérifie si l'énergie est suffisante,
+     *  puis transcrit via le serveur pour détecter la wake phrase. */
+    private suspend fun checkWakePhrase(): Boolean = withContext(Dispatchers.IO) {
+        try {
+            val sampleSize = Config.SAMPLE_RATE * Config.WAKE_PHRASE_SAMPLE_MS / 1000
+            val buf = ShortArray(sampleSize)
+            val rec = android.media.AudioRecord(
+                android.media.MediaRecorder.AudioSource.MIC,
+                Config.SAMPLE_RATE, Config.CHANNEL_CONFIG, Config.AUDIO_FORMAT,
+                sampleSize * 2 * 2
+            )
+            if (rec.state != android.media.AudioRecord.STATE_INITIALIZED) {
+                rec.release(); return@withContext false
+            }
+            rec.startRecording()
+            val n = rec.read(buf, 0, sampleSize)
+            rec.stop(); rec.release()
+            if (n <= 0) return@withContext false
+
+            val rms = kotlin.math.sqrt(buf.take(n).map { it.toDouble() * it }.average()).toFloat()
+            if (rms < Config.WAKE_PHRASE_MIN_RMS) return@withContext false
+
+            // Énergie suffisante → transcrire via le serveur
+            val wav = audioCapture.pcmToWav(
+                java.nio.ByteBuffer.allocate(n * 2)
+                    .order(java.nio.ByteOrder.LITTLE_ENDIAN)
+                    .also { bb -> for (i in 0 until n) bb.putShort(buf[i]) }
+                    .array()
+            )
+            val prefs = getSharedPreferences(Config.PREF_FILE, android.content.Context.MODE_PRIVATE)
+            val token = prefs.getString(Config.KEY_TOKEN, null) ?: Config.PRELOADED_TOKEN
+            val transcript = transcribeWav(wav, token)
+            val normalized = transcript.lowercase().trim()
+            val detected = Config.WAKE_PHRASES.any { normalized.contains(it) }
+            if (detected) Log.i(TAG, "Wake phrase detected: $transcript")
+            detected
+        } catch (e: Exception) {
+            Log.d(TAG, "Wake phrase check error: ${e.message}")
+            false
+        }
+    }
+
+    /** Transcription STT légère via l'endpoint HTTP du serveur (WAV brut en body). */
+    private fun transcribeWav(wav: ByteArray, token: String): String {
+        return try {
+            val url = java.net.URL("${Config.API_BASE_URL}/stt?token=$token")
+            val conn = (url.openConnection() as java.net.HttpURLConnection).apply {
+                requestMethod = "POST"
+                doOutput = true
+                setRequestProperty("Content-Type", "audio/wav")
+                connectTimeout = 3000
+                readTimeout = 4000
+            }
+            conn.outputStream.write(wav)
+            val resp = conn.inputStream.bufferedReader().readText()
+            conn.disconnect()
+            org.json.JSONObject(resp).optString("text", "")
+        } catch (e: Exception) { "" }
+    }
 
     private fun startMainLoop() {
         listeningJob?.cancel()
@@ -148,42 +276,58 @@ class EliseForegroundService : Service() {
             val chunkMs        = (Config.SAMPLE_RATE.toFloat() / 10 / Config.SAMPLE_RATE * 1000).toLong()
                                      .coerceAtLeast(80L)
 
-            audioCapture.startContinuous()
+            // Mic off at start — only turns on when user double taps
 
             while (isActive) {
-                val (samples, rms) = audioCapture.readChunk()
-                if (samples.isEmpty()) { delay(10); continue }
 
-                // ── Wake word (état WAITING seulement) ────────────────────────
-                if (!isListening && currentState == EliseState.WAITING) {
-                    if (wakeWordDetector.process(samples)) {
-                        Log.i(TAG, "Wake word détecté")
-                        wakeWordDetector.reset()
-                        activateTrigger.set(true)
-                        vibrateOnce(60)
-                    }
-                }
-
-                // ── Double tap ─────────────────────────────────────────────────
-                if (activateTrigger.getAndSet(false)) {
-                    if (!isListening) {
+                // ── WAITING : mic éteint, attend double tap ou wake phrase ────
+                if (!isListening) {
+                    if (activateTrigger.getAndSet(false)) {
+                        audioCapture.startContinuous()
                         isListening    = true
                         lastActivityMs = System.currentTimeMillis()
                         vadMs          = 0L
+                        vibrateOnce(60)
                         broadcastState(EliseState.LISTENING)
                         updateNotification(EliseState.LISTENING)
-                    } else {
-                        // Déjà en écoute → déclenche immédiatement
-                        vadMs = Config.VAD_TRIGGER_MS + 1
+                        continue
                     }
+                    // Vérification wake phrase toutes les 3s
+                    val now = System.currentTimeMillis()
+                    if (now - lastWakePhraseCheckMs >= Config.WAKE_PHRASE_CHECK_INTERVAL_MS) {
+                        lastWakePhraseCheckMs = now
+                        if (checkWakePhrase()) {
+                            audioCapture.startContinuous()
+                            isListening    = true
+                            lastActivityMs = System.currentTimeMillis()
+                            vadMs          = 0L
+                            vibrateOnce(80)
+                            broadcastState(EliseState.LISTENING)
+                            updateNotification(EliseState.LISTENING)
+                            continue
+                        }
+                    }
+                    delay(50)
+                    continue
                 }
 
-                if (!isListening) continue
+                // ── LISTENING : mic actif ──────────────────────────────────────
+                val (_, rms) = audioCapture.readChunk()
 
-                // ── Silence → WAITING après 3s ────────────────────────────────
+                // Double tap pendant LISTENING → annuler, mic éteint
+                if (activateTrigger.getAndSet(false)) {
+                    audioCapture.stop()
+                    isListening = false
+                    vadMs       = 0L
+                    broadcastState(EliseState.WAITING)
+                    updateNotification(EliseState.WAITING)
+                    continue
+                }
+
+                // Silence prolongé → retour WAITING, mic éteint
                 if (rms >= Config.SILENCE_THRESHOLD_RMS) lastActivityMs = System.currentTimeMillis()
-                val silenced = System.currentTimeMillis() - lastActivityMs >= Config.SILENCE_TO_WAIT_MS
-                if (silenced && currentState == EliseState.LISTENING) {
+                if (System.currentTimeMillis() - lastActivityMs >= Config.SILENCE_TO_WAIT_MS) {
+                    audioCapture.stop()
                     isListening = false
                     vadMs       = 0L
                     broadcastState(EliseState.WAITING)
@@ -192,11 +336,7 @@ class EliseForegroundService : Service() {
                 }
 
                 // ── VAD : détection parole → RECORDING ────────────────────────
-                if (rms >= Config.VAD_THRESHOLD_RMS) {
-                    vadMs += chunkMs
-                } else {
-                    vadMs = 0L
-                }
+                if (rms >= Config.VAD_THRESHOLD_RMS) vadMs += chunkMs else vadMs = 0L
                 if (vadMs < Config.VAD_TRIGGER_MS) continue
 
                 vadMs = 0L
@@ -393,15 +533,23 @@ class EliseForegroundService : Service() {
     // ── Notifications ──────────────────────────────────────────────────────────
 
     private fun createNotificationChannel() {
-        val channel = NotificationChannel(
-            NOTIF_CHANNEL_ID, "ÉLISE", NotificationManager.IMPORTANCE_LOW
-        ).apply { setShowBadge(false) }
-        getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
+        val nm = getSystemService(NotificationManager::class.java)
+        nm.createNotificationChannel(
+            NotificationChannel(NOTIF_CHANNEL_ID, "ÉLISE", NotificationManager.IMPORTANCE_LOW)
+                .apply { setShowBadge(false) }
+        )
+        nm.createNotificationChannel(
+            NotificationChannel(NOTIF_CHANNEL_EVENTS_ID, "ÉLISE Alertes", NotificationManager.IMPORTANCE_HIGH)
+                .apply {
+                    description = "Nouvelles compétences et alertes système"
+                    enableVibration(true)
+                }
+        )
     }
 
     private fun buildNotification(state: EliseState): Notification {
         val text = when (state) {
-            EliseState.WAITING    -> "Veille — double tap ou « Ok Élise »"
+            EliseState.WAITING    -> "Veille — double tap pour parler"
             EliseState.LISTENING  -> "Écoute active — parle pour déclencher"
             EliseState.RECORDING  -> "Enregistrement..."
             EliseState.PROCESSING -> "Traitement..."

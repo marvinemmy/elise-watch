@@ -139,7 +139,10 @@ class AudioCapture {
 
                 // Calcul RMS pour détection silence
                 val rms = sqrt(buf.take(n).map { it.toDouble() * it.toDouble() }.average()).toFloat()
-                Log.v("AudioCapture", "chunk rms=$rms silenceMs=$silenceMs")
+                // Log.v en mode normal, Log.d en mode diagnostic pour calibration
+                if (Config.MIC_DIAGNOSTIC_MODE) {
+                    Log.d("AudioCapture", "rms=${"%.0f".format(rms)} silence=$silenceMs/${Config.SILENCE_DURATION_MS}ms threshold=${Config.SILENCE_THRESHOLD_RMS}")
+                }
                 if (rms < Config.SILENCE_THRESHOLD_RMS) {
                     silenceMs += 100
                     if (silenceMs >= Config.SILENCE_DURATION_MS) break
