@@ -2,10 +2,7 @@ package com.lnsgroup.elise.companion
 
 import android.Manifest
 import android.content.pm.PackageManager
-import android.media.AudioFormat
-import android.media.AudioRecord
 import android.media.MediaPlayer
-import android.media.MediaRecorder
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -20,21 +17,42 @@ import java.io.File
 
 private const val TAG = "VoiceFragment"
 
+/**
+ * Fragment voix — transport WebRTC (UDP/Opus) avec fallback WebSocket.
+ *
+ * Mode WebRTC (défaut) :
+ *   - Tap pour démarrer la session → micro stream continu vers serveur
+ *   - VAD côté serveur détecte fin d'énoncé → STT → LLM → TTS → audio retour
+ *   - Tap pendant la réponse → interruption
+ *   - Tap pendant l'écoute → ferme la session
+ *
+ * Mode WebSocket (fallback si WebRTC échoue) :
+ *   - Push-to-talk classique : tap pour enregistrer, tap pour envoyer
+ */
 class VoiceFragment : Fragment() {
 
     private var _binding: FragmentVoiceBinding? = null
     private val binding get() = _binding!!
-    private var isRecording = false
     private var scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+
+    // ── WebRTC ────────────────────────────────────────────────────────────────
+    private var rtcClient : EliseRTCClient? = null
+    private var rtcActive = false
+
+    // ── WebSocket fallback ────────────────────────────────────────────────────
+    private var isRecording = false
+    private var wsActive    = false
 
     private val micPermLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { granted ->
-        if (granted) startRecording() else setStatus("Microphone requis")
+        if (granted) onMicGranted() else setStatus("Microphone requis")
     }
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, saved: Bundle?): View {
-        _binding = FragmentVoiceBinding.inflate(inflater, container, false)
+    // ── Lifecycle ─────────────────────────────────────────────────────────────
+
+    override fun onCreateView(i: LayoutInflater, c: ViewGroup?, s: Bundle?): View {
+        _binding = FragmentVoiceBinding.inflate(i, c, false)
         return binding.root
     }
 
@@ -54,35 +72,130 @@ class VoiceFragment : Fragment() {
         }
     }
 
+    override fun onDestroyView() {
+        super.onDestroyView()
+        scope.cancel()
+        _binding = null
+    }
+
+    // ── Tap handler ───────────────────────────────────────────────────────────
+
     private fun onMicTap() {
-        if (isRecording) stopRecording()
-        else {
-            if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.RECORD_AUDIO)
-                == PackageManager.PERMISSION_GRANTED) startRecording()
-            else micPermLauncher.launch(Manifest.permission.RECORD_AUDIO)
+        when {
+            rtcActive                  -> handleRtcTap()
+            wsActive || isRecording    -> stopRecording()
+            else                       -> requestMicAndStart()
         }
     }
 
-    private fun startRecording() {
+    private fun requestMicAndStart() {
+        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.RECORD_AUDIO)
+            == PackageManager.PERMISSION_GRANTED
+        ) onMicGranted()
+        else micPermLauncher.launch(Manifest.permission.RECORD_AUDIO)
+    }
+
+    private fun onMicGranted() {
+        scope.launch { startRtcSession() }
+    }
+
+    // ── WebRTC session ────────────────────────────────────────────────────────
+
+    private fun handleRtcTap() {
+        val client = rtcClient ?: return
+        when {
+            // Réponse en cours → interrompre
+            binding.waveView.state == EliseWaveView.State.SPEAKING ||
+            binding.waveView.state == EliseWaveView.State.PROCESSING -> {
+                client.sendInterrupt()
+                binding.waveView.setState(EliseWaveView.State.RECORDING)
+                setStatus("À l'écoute… parle")
+            }
+            // En écoute → fermer la session
+            else -> {
+                scope.launch { closeRtcSession() }
+            }
+        }
+    }
+
+    private suspend fun startRtcSession() {
+        binding.waveView.setState(EliseWaveView.State.PROCESSING)
+        setStatus("Connexion WebRTC…")
+
+        val client = EliseRTCClient(requireContext(), TOKEN)
+        rtcClient  = client
+        rtcActive  = true
+
+        try {
+            withContext(Dispatchers.IO) { client.connect() }
+
+            binding.waveView.setState(EliseWaveView.State.RECORDING)
+            setStatus("À l'écoute…  (appuie pour fermer)")
+
+            // Boucle d'événements DataChannel
+            for (evt in client.events) {
+                when (evt.type) {
+                    "processing"     -> {
+                        binding.waveView.setState(EliseWaveView.State.PROCESSING)
+                        setStatus("Élise réfléchit…")
+                    }
+                    "response_start" -> {
+                        binding.waveView.setState(EliseWaveView.State.SPEAKING)
+                        val preview = evt.transcript.take(100)
+                            .let { if (evt.transcript.length > 100) "$it…" else it }
+                        setStatus(preview)
+                    }
+                    "response_end"   -> {
+                        binding.waveView.setState(EliseWaveView.State.RECORDING)
+                        setStatus("À l'écoute…  (appuie pour fermer)")
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "WebRTC failed: ${e.message} — fallback WebSocket")
+            closeRtcSession()
+            // Fallback WebSocket push-to-talk
+            startWebSocketFallback()
+        }
+    }
+
+    private suspend fun closeRtcSession() {
+        rtcActive = false
+        rtcClient?.disconnect()
+        rtcClient = null
+        binding.waveView.setState(EliseWaveView.State.IDLE)
+        setStatus("Appuie pour parler à Élise")
+    }
+
+    // ── WebSocket fallback (push-to-talk classique) ───────────────────────────
+
+    private fun startWebSocketFallback() {
+        if (wsActive || isRecording) return
+        wsActive    = true
         isRecording = true
         binding.waveView.setState(EliseWaveView.State.RECORDING)
         setStatus("J'écoute…  (appuie pour arrêter)")
 
-        val bufSize = AudioRecord.getMinBufferSize(
-            SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT
+        val bufSize = android.media.AudioRecord.getMinBufferSize(
+            SAMPLE_RATE,
+            android.media.AudioFormat.CHANNEL_IN_MONO,
+            android.media.AudioFormat.ENCODING_PCM_16BIT,
         ).coerceAtLeast(SAMPLE_RATE / 5 * 2)
 
         scope.launch(Dispatchers.IO) {
-            val recorder = AudioRecord(
-                MediaRecorder.AudioSource.MIC, SAMPLE_RATE,
-                AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, bufSize * 4
+            val recorder = android.media.AudioRecord(
+                android.media.MediaRecorder.AudioSource.MIC,
+                SAMPLE_RATE,
+                android.media.AudioFormat.CHANNEL_IN_MONO,
+                android.media.AudioFormat.ENCODING_PCM_16BIT,
+                bufSize * 4,
             )
-            if (recorder.state != AudioRecord.STATE_INITIALIZED) {
+            if (recorder.state != android.media.AudioRecord.STATE_INITIALIZED) {
                 withContext(Dispatchers.Main) { setStatus("Microphone non disponible") }
-                return@launch
+                wsActive = false; return@launch
             }
             recorder.startRecording()
-            val pcm = mutableListOf<Byte>()
+            val pcm   = mutableListOf<Byte>()
             val chunk = ShortArray(bufSize / 2)
             val start = System.currentTimeMillis()
 
@@ -105,7 +218,7 @@ class VoiceFragment : Fragment() {
                     binding.waveView.setState(EliseWaveView.State.IDLE)
                     setStatus("Trop court — appuie et parle")
                 }
-                return@launch
+                wsActive = false; return@launch
             }
 
             withContext(Dispatchers.Main) {
@@ -114,13 +227,13 @@ class VoiceFragment : Fragment() {
             }
 
             try {
-                val wav = EliseClient.pcmToWav(pcm.toByteArray())
+                val wav      = EliseClient.pcmToWav(pcm.toByteArray())
                 val response = EliseClient.sendVoice(wav, TOKEN)
 
                 withContext(Dispatchers.Main) {
                     binding.waveView.setState(EliseWaveView.State.SPEAKING)
-                    val preview = if (response.responseText.length > 120)
-                        response.responseText.take(117) + "…" else response.responseText
+                    val preview = response.responseText.take(100)
+                        .let { if (response.responseText.length > 100) "$it…" else it }
                     setStatus(preview)
                 }
 
@@ -128,10 +241,10 @@ class VoiceFragment : Fragment() {
 
                 withContext(Dispatchers.Main) {
                     binding.waveView.setState(EliseWaveView.State.IDLE)
-                    setStatus("Appuie pour parler")
+                    setStatus("Appuie pour reparler")
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Erreur: ${e.message}")
+                Log.e(TAG, "WS error: ${e.message}")
                 withContext(Dispatchers.Main) {
                     binding.waveView.setState(EliseWaveView.State.ERROR)
                     setStatus(e.message?.take(80) ?: "Erreur de connexion")
@@ -139,14 +252,22 @@ class VoiceFragment : Fragment() {
                     binding.waveView.setState(EliseWaveView.State.IDLE)
                     setStatus("Appuie pour réessayer")
                 }
+            } finally {
+                wsActive = false
             }
         }
     }
 
-    private fun stopRecording() { isRecording = false }
+    private fun stopRecording() {
+        isRecording = false
+    }
+
+    // ── Utils ─────────────────────────────────────────────────────────────────
 
     private fun stopEverything() {
         isRecording = false
+        wsActive    = false
+        scope.launch { closeRtcSession() }
         scope.cancel()
         EliseOverlayService.stop(requireContext())
         EliseCallMonitor.stop(requireContext())
@@ -169,11 +290,5 @@ class VoiceFragment : Fragment() {
 
     private fun setStatus(text: String) {
         _binding?.tvStatus?.text = text
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        scope.cancel()
-        _binding = null
     }
 }

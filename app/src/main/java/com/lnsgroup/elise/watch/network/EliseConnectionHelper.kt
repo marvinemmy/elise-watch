@@ -19,8 +19,8 @@ private const val HEALTH_URL = "https://lnsgroup.dev/health"
 object EliseConnectionHelper {
 
     private val healthClient = OkHttpClient.Builder()
-        .connectTimeout(4, TimeUnit.SECONDS)
-        .readTimeout(4, TimeUnit.SECONDS)
+        .connectTimeout(1500, TimeUnit.MILLISECONDS)
+        .readTimeout(1500, TimeUnit.MILLISECONDS)
         .build()
 
     /**

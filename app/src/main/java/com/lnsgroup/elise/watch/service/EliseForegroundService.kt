@@ -204,68 +204,6 @@ class EliseForegroundService : Service() {
 
     // ── Boucle principale ──────────────────────────────────────────────────────
 
-    private var lastWakePhraseCheckMs = 0L
-
-    /** Prend un échantillon audio court, vérifie si l'énergie est suffisante,
-     *  puis transcrit via le serveur pour détecter la wake phrase. */
-    private suspend fun checkWakePhrase(): Boolean = withContext(Dispatchers.IO) {
-        try {
-            val sampleSize = Config.SAMPLE_RATE * Config.WAKE_PHRASE_SAMPLE_MS / 1000
-            val buf = ShortArray(sampleSize)
-            val rec = android.media.AudioRecord(
-                android.media.MediaRecorder.AudioSource.MIC,
-                Config.SAMPLE_RATE, Config.CHANNEL_CONFIG, Config.AUDIO_FORMAT,
-                sampleSize * 2 * 2
-            )
-            if (rec.state != android.media.AudioRecord.STATE_INITIALIZED) {
-                rec.release(); return@withContext false
-            }
-            rec.startRecording()
-            val n = rec.read(buf, 0, sampleSize)
-            rec.stop(); rec.release()
-            if (n <= 0) return@withContext false
-
-            val rms = kotlin.math.sqrt(buf.take(n).map { it.toDouble() * it }.average()).toFloat()
-            if (rms < Config.WAKE_PHRASE_MIN_RMS) return@withContext false
-
-            // Énergie suffisante → transcrire via le serveur
-            val wav = audioCapture.pcmToWav(
-                java.nio.ByteBuffer.allocate(n * 2)
-                    .order(java.nio.ByteOrder.LITTLE_ENDIAN)
-                    .also { bb -> for (i in 0 until n) bb.putShort(buf[i]) }
-                    .array()
-            )
-            val prefs = getSharedPreferences(Config.PREF_FILE, android.content.Context.MODE_PRIVATE)
-            val token = prefs.getString(Config.KEY_TOKEN, null) ?: Config.PRELOADED_TOKEN
-            val transcript = transcribeWav(wav, token)
-            val normalized = transcript.lowercase().trim()
-            val detected = Config.WAKE_PHRASES.any { normalized.contains(it) }
-            if (detected) Log.i(TAG, "Wake phrase detected: $transcript")
-            detected
-        } catch (e: Exception) {
-            Log.d(TAG, "Wake phrase check error: ${e.message}")
-            false
-        }
-    }
-
-    /** Transcription STT légère via l'endpoint HTTP du serveur (WAV brut en body). */
-    private fun transcribeWav(wav: ByteArray, token: String): String {
-        return try {
-            val url = java.net.URL("${Config.API_BASE_URL}/stt?token=$token")
-            val conn = (url.openConnection() as java.net.HttpURLConnection).apply {
-                requestMethod = "POST"
-                doOutput = true
-                setRequestProperty("Content-Type", "audio/wav")
-                connectTimeout = 3000
-                readTimeout = 4000
-            }
-            conn.outputStream.write(wav)
-            val resp = conn.inputStream.bufferedReader().readText()
-            conn.disconnect()
-            org.json.JSONObject(resp).optString("text", "")
-        } catch (e: Exception) { "" }
-    }
-
     private fun startMainLoop() {
         listeningJob?.cancel()
         listeningJob = scope.launch {
@@ -280,7 +218,7 @@ class EliseForegroundService : Service() {
 
             while (isActive) {
 
-                // ── WAITING : mic éteint, attend double tap ou wake phrase ────
+                // ── WAITING : mic éteint, attend double tap uniquement ────────
                 if (!isListening) {
                     if (activateTrigger.getAndSet(false)) {
                         audioCapture.startContinuous()
@@ -292,22 +230,8 @@ class EliseForegroundService : Service() {
                         updateNotification(EliseState.LISTENING)
                         continue
                     }
-                    // Vérification wake phrase toutes les 3s
-                    val now = System.currentTimeMillis()
-                    if (now - lastWakePhraseCheckMs >= Config.WAKE_PHRASE_CHECK_INTERVAL_MS) {
-                        lastWakePhraseCheckMs = now
-                        if (checkWakePhrase()) {
-                            audioCapture.startContinuous()
-                            isListening    = true
-                            lastActivityMs = System.currentTimeMillis()
-                            vadMs          = 0L
-                            vibrateOnce(80)
-                            broadcastState(EliseState.LISTENING)
-                            updateNotification(EliseState.LISTENING)
-                            continue
-                        }
-                    }
-                    delay(50)
+                    // Mic éteint — polling léger, pas de wake word, économie batterie
+                    delay(200)
                     continue
                 }
 

@@ -27,7 +27,8 @@ import kotlinx.coroutines.*
 import java.io.File
 
 private const val TAG = "EliseOverlay"
-private const val CHANNEL_ID = "elise_overlay"
+private const val CHANNEL_ID        = "elise_overlay"
+private const val CHANNEL_EVENTS_ID = "elise_events"
 private const val NOTIF_ID = 42
 private const val ACTION_SET_CALL_MODE = "elise.SET_CALL_MODE"
 
@@ -67,6 +68,9 @@ class EliseOverlayService : Service() {
 
         enableDrag(params)
         wm.addView(overlayView, params)
+
+        // Écoute des notifications push serveur (gap fixes, alertes, etc.)
+        startEventListener()
 
         // Long press sur l'orbe → ferme l'overlay
         overlayView.setOnLongClickListener {
@@ -288,10 +292,81 @@ class EliseOverlayService : Service() {
         }
     }
 
+    // ── Event listener — push notifications serveur → téléphone ─────────────
+
+    private val eventClient = okhttp3.OkHttpClient.Builder()
+        .connectTimeout(15, java.util.concurrent.TimeUnit.SECONDS)
+        .readTimeout(0, java.util.concurrent.TimeUnit.MILLISECONDS)  // pas de timeout — connexion persistante
+        .pingInterval(20, java.util.concurrent.TimeUnit.SECONDS)
+        .build()
+
+    private fun startEventListener() {
+        scope.launch(Dispatchers.IO) {
+            while (isActive) {
+                try {
+                    val req = okhttp3.Request.Builder()
+                        .url("${BuildConfig.API_BASE_URL}/ws/events?token=$TOKEN")
+                        .build()
+                    val latch = java.util.concurrent.CountDownLatch(1)
+                    eventClient.newWebSocket(req, object : okhttp3.WebSocketListener() {
+                        override fun onMessage(ws: okhttp3.WebSocket, text: String) {
+                            try {
+                                val json = org.json.JSONObject(text)
+                                if (json.optString("type") == "notification") {
+                                    pushSystemNotification(
+                                        json.optString("title", "Élise"),
+                                        json.optString("body", ""),
+                                    )
+                                }
+                            } catch (_: Exception) {}
+                        }
+                        override fun onFailure(ws: okhttp3.WebSocket, t: Throwable, r: okhttp3.Response?) {
+                            Log.w(TAG, "Event WS failure: ${t.message}")
+                            latch.countDown()
+                        }
+                        override fun onClosed(ws: okhttp3.WebSocket, code: Int, reason: String) {
+                            latch.countDown()
+                        }
+                    })
+                    latch.await()
+                } catch (e: Exception) {
+                    Log.w(TAG, "Event listener error: ${e.message}")
+                }
+                delay(5_000)  // attendre avant de reconnecter
+            }
+        }
+    }
+
+    private fun pushSystemNotification(title: String, body: String) {
+        val nm = getSystemService(NotificationManager::class.java)
+        val notif = androidx.core.app.NotificationCompat.Builder(this, CHANNEL_EVENTS_ID)
+            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setContentTitle(title)
+            .setContentText(body)
+            .setStyle(androidx.core.app.NotificationCompat.BigTextStyle().bigText(body))
+            .setPriority(androidx.core.app.NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true)
+            .build()
+        nm.notify(System.currentTimeMillis().toInt(), notif)
+        Log.i(TAG, "Push notification shown: $title")
+    }
+
     private fun createNotificationChannel() {
+        val nm = getSystemService(NotificationManager::class.java)
+        // Canal overlay (foreground service)
         val ch = NotificationChannel(CHANNEL_ID, "ÉLISE Active", NotificationManager.IMPORTANCE_LOW)
         ch.description = "ÉLISE overlay actif"
-        getSystemService(NotificationManager::class.java).createNotificationChannel(ch)
+        nm.createNotificationChannel(ch)
+        // Canal notifications push (haute priorité)
+        val chEvents = NotificationChannel(
+            CHANNEL_EVENTS_ID, "ÉLISE Notifications",
+            NotificationManager.IMPORTANCE_HIGH
+        ).apply {
+            description = "Alertes et nouvelles compétences acquises"
+            enableLights(true)
+            enableVibration(true)
+        }
+        nm.createNotificationChannel(chEvents)
     }
 
     private fun buildNotification(): Notification {

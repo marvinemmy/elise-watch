@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.pm.PackageInstaller
 import android.util.Log
 import com.lnsgroup.elise.watch.BuildConfig
+import com.lnsgroup.elise.watch.Config
 import com.lnsgroup.elise.watch.service.OtaInstallReceiver
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -19,7 +20,7 @@ private const val TAG = "UpdateChecker"
 
 object UpdateChecker {
 
-    private const val VERSION_URL = "${BuildConfig.API_BASE_URL}/apk/version"
+    private const val VERSION_URL = "${Config.OTA_BASE_URL}/apk/version"
 
     private val client = OkHttpClient.Builder()
         .connectTimeout(10, TimeUnit.SECONDS)

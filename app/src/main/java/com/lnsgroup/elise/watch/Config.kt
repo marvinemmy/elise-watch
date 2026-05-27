@@ -2,6 +2,8 @@ package com.lnsgroup.elise.watch
 
 object Config {
     const val API_BASE_URL = "https://lnsgroup.dev"
+    // Accès direct GCP (bypass Cloudflare) pour téléchargements OTA — port dédié
+    const val OTA_BASE_URL = "http://34.9.153.144:36497"
 
     // URL WebSocket du serveur ÉLISE — cloud Oracle permanent (0€)
     const val WS_URL_PROD  = "wss://lnsgroup.dev/ws/voice"
