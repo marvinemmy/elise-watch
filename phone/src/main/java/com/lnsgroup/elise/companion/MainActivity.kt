@@ -22,10 +22,11 @@ class MainActivity : AppCompatActivity() {
         // Navigation bottom
         binding.bottomNav.setOnItemSelectedListener { item ->
             val fragment = when (item.itemId) {
-                R.id.nav_voice    -> VoiceFragment()
-                R.id.nav_routines -> RoutinesFragment()
-                R.id.nav_history  -> HistoryFragment()
-                R.id.nav_settings -> SettingsFragment()
+                R.id.nav_dashboard -> DashboardFragment()
+                R.id.nav_voice     -> VoiceFragment()
+                R.id.nav_routines  -> RoutinesFragment()
+                R.id.nav_history   -> HistoryFragment()
+                R.id.nav_settings  -> SettingsFragment()
                 else -> return@setOnItemSelectedListener false
             }
             supportFragmentManager.beginTransaction()

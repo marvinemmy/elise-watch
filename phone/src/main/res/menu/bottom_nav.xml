@@ -2,6 +2,11 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item
+        android:id="@+id/nav_dashboard"
+        android:icon="@drawable/ic_dashboard"
+        android:title="Stats" />
+
+    <item
         android:id="@+id/nav_voice"
         android:icon="@drawable/ic_mic"
         android:title="Élise" />
