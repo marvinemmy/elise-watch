@@ -45,7 +45,7 @@ object Config {
     const val VAD_INTERRUPT_MS   = 250L    // 250ms de voix = interruption confirmée
 
     // Silence → retour WAITING depuis LISTENING
-    const val SILENCE_TO_WAIT_MS = 10_000L  // 10s d'écoute après réponse avant retour WAITING
+    const val SILENCE_TO_WAIT_MS = 5_000L   // 5s d'écoute après réponse avant retour WAITING
 
     // ── Diagnostic micro ──────────────────────────────────────────────────────
     // Activer pour logger le RMS en continu et calibrer les seuils
