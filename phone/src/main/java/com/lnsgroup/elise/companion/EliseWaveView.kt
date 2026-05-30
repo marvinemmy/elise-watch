@@ -14,7 +14,8 @@ class EliseWaveView @JvmOverloads constructor(
 
     enum class State { IDLE, LISTENING, RECORDING, PROCESSING, SPEAKING, ERROR }
 
-    private var state = State.LISTENING
+    var state = State.LISTENING
+        private set
     private var amplitude = 0f
     private var phase = 0f
     private var scanY = 0f

@@ -74,7 +74,8 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 
     // WebRTC — transport UDP/Opus/DTLS-SRTP pour ÉLISE
-    implementation("org.webrtc:google-webrtc:1.0.32006")
+    // google-webrtc était sur JCenter (mort) — stream-webrtc-android = fork maintenu, même API org.webrtc.*
+    implementation("io.getstream:stream-webrtc-android:1.1.0")
 
     // CameraX
     implementation("androidx.camera:camera-core:1.3.4")

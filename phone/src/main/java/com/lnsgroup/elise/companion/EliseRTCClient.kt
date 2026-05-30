@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
+import kotlin.coroutines.resumeWithException
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -71,7 +72,7 @@ class EliseRTCClient(private val context: Context, private val token: String) {
         sdpSemantics           = PeerConnection.SdpSemantics.UNIFIED_PLAN
         // GATHER_ONCE = rassemble tous les candidats une fois, puis envoie l'offre
         continualGatheringPolicy = PeerConnection.ContinualGatheringPolicy.GATHER_ONCE
-        enableDtlsSrtp         = true
+        // enableDtlsSrtp removed — DTLS-SRTP enabled by default in stream-webrtc-android
     }
 
     // ── Connexion principale ─────────────────────────────────────────────────
@@ -184,8 +185,8 @@ class EliseRTCClient(private val context: Context, private val token: String) {
         suspendCancellableCoroutine { cont ->
             pc!!.createOffer(
                 sdpObserver(
-                    onSuccess = { if (cont.isActive) cont.resume(it) },
-                    onError   = { if (cont.isActive) cont.resumeWithException(Exception("createOffer: $it")) },
+                    onSuccess = { if (cont.isActive) cont.resumeWith(Result.success(it)) },
+                    onError   = { if (cont.isActive) cont.resumeWith(Result.failure(Exception("createOffer: $it"))) },
                 ),
                 MediaConstraints(),
             )
@@ -195,8 +196,8 @@ class EliseRTCClient(private val context: Context, private val token: String) {
         suspendCancellableCoroutine<Unit> { cont ->
             pc!!.setLocalDescription(
                 sdpObserver(
-                    onSetOk = { if (cont.isActive) cont.resume(Unit) },
-                    onError = { if (cont.isActive) cont.resumeWithException(Exception("setLocalDesc: $it")) },
+                    onSetOk = { if (cont.isActive) cont.resumeWith(Result.success(Unit)) },
+                    onError = { if (cont.isActive) cont.resumeWith(Result.failure(Exception("setLocalDesc: $it"))) },
                 ),
                 sdp,
             )
@@ -206,8 +207,8 @@ class EliseRTCClient(private val context: Context, private val token: String) {
         suspendCancellableCoroutine<Unit> { cont ->
             pc!!.setRemoteDescription(
                 sdpObserver(
-                    onSetOk = { if (cont.isActive) cont.resume(Unit) },
-                    onError = { if (cont.isActive) cont.resumeWithException(Exception("setRemoteDesc: $it")) },
+                    onSetOk = { if (cont.isActive) cont.resumeWith(Result.success(Unit)) },
+                    onError = { if (cont.isActive) cont.resumeWith(Result.failure(Exception("setRemoteDesc: $it"))) },
                 ),
                 sdp,
             )
