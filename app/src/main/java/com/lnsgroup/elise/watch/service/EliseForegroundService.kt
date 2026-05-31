@@ -332,16 +332,17 @@ class EliseForegroundService : Service() {
             ?: run { broadcastState(EliseState.NOT_CONFIGURED); return }
         val serverUrl = prefs.getString(Config.KEY_SERVER_URL, Config.WS_URL) ?: Config.WS_URL
 
-        // Lecture des capteurs biologiques et notifications avant envoi
+        // Lecture des capteurs biologiques et géolocalisation
         val hrBpm = healthCollector.lastHr.takeIf { it > 0 }
+        val location = com.lnsgroup.elise.watch.health.WatchLocation.getLastKnown(this)
 
         val response = try {
             if (com.lnsgroup.elise.watch.network.EliseConnectionHelper.hasDirectInternet()) {
                 val ws = EliseWebSocket(serverUrl, token)
                 try {
-                    // Enrichir l'audio WAV avec les notifications si l'utilisateur les demande
                     val wavWithContext = enrichWavWithContext(wav)
-                    ws.sendVoice(wavWithContext, heartRate = hrBpm)
+                    ws.sendVoice(wavWithContext, heartRate = hrBpm,
+                        lat = location?.first, lon = location?.second)
                 } finally { ws.shutdown() }
             } else {
                 Log.i(TAG, "No direct internet, routing via phone proxy")

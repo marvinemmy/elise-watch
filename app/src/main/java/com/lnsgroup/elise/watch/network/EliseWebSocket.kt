@@ -45,9 +45,12 @@ class EliseWebSocket(private val serverUrl: String, private val token: String) {
         wavBytes: ByteArray,
         onChunk: ((ByteArray) -> Unit)? = null,
         heartRate: Int? = null,
+        lat: Double? = null,
+        lon: Double? = null,
     ): EliseResponse = withContext(Dispatchers.IO) {
-        val hrParam = if (heartRate != null && heartRate > 0) "&hr=$heartRate" else ""
-        val url = "$serverUrl?token=${token}&v=${com.lnsgroup.elise.watch.BuildConfig.VERSION_CODE}$hrParam"
+        val hrParam  = if (heartRate != null && heartRate > 0) "&hr=$heartRate" else ""
+        val geoParam = if (lat != null && lon != null) "&lat=${"%.5f".format(lat)}&lon=${"%.5f".format(lon)}" else ""
+        val url = "$serverUrl?token=${token}&v=${com.lnsgroup.elise.watch.BuildConfig.VERSION_CODE}$hrParam$geoParam"
         val request = Request.Builder().url(url).build()
 
         suspendCancellableCoroutine { cont ->
